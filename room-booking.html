@@ -549,6 +549,21 @@ function initUI(user) {
 // ── FIRESTORE ────────────────────────────────────────────────
 function loadBookings() {
   onSnapshot(collection(db, "bookings"), (snap) => {
+    // detect status changes for current user
+    if (currentUser) {
+      snap.docChanges().forEach(change => {
+        if (change.type === "modified") {
+          const data = change.doc.data();
+          if (data.user === currentUser.email && data.status === "rejected") {
+            toast(`❌ คำขอจอง "${data.title}" ถูกปฏิเสธ`);
+          }
+          if (data.user === currentUser.email && data.status === "approved") {
+            toast(`✅ คำขอจอง "${data.title}" ได้รับการอนุมัติแล้ว`);
+          }
+        }
+      });
+    }
+
     bookings = [];
     snap.forEach(d => {
       const data = d.data();

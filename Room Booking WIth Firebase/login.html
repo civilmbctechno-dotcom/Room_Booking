@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>เข้าสู่ระบบ — ห้องประชุมมีนบุรี</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Sarabun:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --ink: #0f0f10;
+      --muted: #6b6b7a;
+      --line: #e4e4ea;
+      --surface: #fafafc;
+      --white: #ffffff;
+      --accent: #2a5cff;
+      --room-1: #e84040;
+      --room-2: #2a5cff;
+      --room-3: #18b06a;
+      --room-4: #9b59b6;
+    }
+
+    body {
+      font-family: 'Sarabun', sans-serif;
+      background: var(--surface);
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+
+    /* ── LEFT ── */
+    .left {
+      background: var(--ink);
+      padding: 60px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .left::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 20% 80%, rgba(42,92,255,0.25) 0%, transparent 60%),
+                  radial-gradient(ellipse at 80% 20%, rgba(232,64,64,0.15) 0%, transparent 50%);
+      pointer-events: none;
+    }
+
+    .brand {
+      font-family: 'DM Serif Display', serif;
+      font-size: 22px;
+      color: var(--white);
+      letter-spacing: -0.3px;
+      position: relative;
+      z-index: 1;
+    }
+    .brand span { color: var(--accent); }
+
+    .hero-text {
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-text h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(28px, 3.5vw, 46px);
+      color: var(--white);
+      line-height: 1.15;
+      letter-spacing: -0.8px;
+      margin-bottom: 16px;
+    }
+
+    .hero-text h1 em { font-style: italic; color: #aab4ff; }
+
+    .hero-text p {
+      color: rgba(255,255,255,0.5);
+      font-size: 15px;
+      line-height: 1.6;
+      max-width: 320px;
+    }
+
+    /* ── ROOM CARDS ── */
+    .rooms-preview {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .room-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 18px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 10px;
+      backdrop-filter: blur(10px);
+      transition: border-color 0.3s;
+    }
+
+    .room-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+    .room-bar-info { flex: 1; }
+    .room-bar-name { font-size: 13px; font-weight: 600; color: var(--white); }
+    .room-bar-sub  { font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 2px; }
+
+    .room-bar-badge {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 20px;
+      white-space: nowrap;
+      transition: all 0.3s;
+    }
+
+    .room-bar-badge.free {
+      background: rgba(24,176,106,0.2);
+      color: #18b06a;
+    }
+
+    .room-bar-badge.busy {
+      background: rgba(232,64,64,0.2);
+      color: #ff6b6b;
+    }
+
+    .room-bar-badge.soon {
+      background: rgba(245,166,35,0.2);
+      color: #f5a623;
+    }
+
+    .room-bar-badge.loading-badge {
+      background: rgba(255,255,255,0.06);
+      color: rgba(255,255,255,0.3);
+    }
+
+    /* ── RIGHT ── */
+    .right {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 60px 40px;
+    }
+
+    .login-card { width: 100%; max-width: 400px; }
+
+    .login-card h2 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 32px;
+      color: var(--ink);
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+    }
+
+    .login-card p { font-size: 15px; color: var(--muted); margin-bottom: 36px; }
+
+    .status-msg {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      margin-bottom: 20px;
+    }
+    .status-msg.loading { background: #eef2ff; color: var(--accent); display: flex; }
+    .status-msg.error   { background: #fff0f0; color: #c0392b;       display: flex; }
+
+    .spinner {
+      width: 16px; height: 16px;
+      border: 2px solid currentColor;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      flex-shrink: 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .btn-google {
+      width: 100%;
+      display: flex; align-items: center; justify-content: center; gap: 12px;
+      padding: 14px 24px;
+      background: var(--white);
+      border: 1.5px solid var(--line);
+      border-radius: 10px;
+      font-family: 'Sarabun', sans-serif;
+      font-size: 15px; font-weight: 500;
+      color: var(--ink);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .btn-google:hover {
+      border-color: #bbbbc8; background: #f7f7fa;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.07);
+    }
+    .btn-google:active  { transform: translateY(0); }
+    .btn-google:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+    .btn-google svg { flex-shrink: 0; }
+
+    .btn-guest {
+      width: 100%; padding: 13px 24px; margin-top: 12px;
+      background: transparent; border: 1.5px solid var(--line); border-radius: 10px;
+      font-family: 'Sarabun', sans-serif; font-size: 14px; font-weight: 400;
+      color: var(--muted); cursor: pointer; transition: all 0.15s ease;
+    }
+    .btn-guest:hover { border-color: #bbbbc8; color: var(--ink); background: #f7f7fa; }
+
+    .footer-note {
+      margin-top: 36px; font-size: 12px; color: var(--muted);
+      text-align: center; line-height: 1.6;
+    }
+
+    @media (max-width: 768px) {
+      body { grid-template-columns: 1fr; }
+      .left { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- LEFT -->
+<div class="left">
+  <div class="brand">มีนบุรี <span>ห้องประชุม</span></div>
+
+  <div class="hero-text">
+    <h1>ระบบจองห้องประชุม<br><em>ศาลแพ่งมีนบุรี</em></h1>
+    <p>บริหารจัดการห้องประชุมภายในองค์กร ขอจอง อนุมัติ และดูตารางได้ในที่เดียว</p>
+  </div>
+
+  <div class="rooms-preview" id="roomsPreview">
+    <!-- filled by JS -->
+    <div class="room-bar">
+      <div class="room-dot" style="background:var(--room-1)"></div>
+      <div class="room-bar-info"><div class="room-bar-name">ห้องประชุม 1</div><div class="room-bar-sub">ชั้น 5 · ห้องประชุมใหญ่ 29 ที่นั่ง</div></div>
+      <div class="room-bar-badge loading-badge" id="badge-1">กำลังโหลด...</div>
+    </div>
+    <div class="room-bar">
+      <div class="room-dot" style="background:var(--room-2)"></div>
+      <div class="room-bar-info"><div class="room-bar-name">ห้องประชุม 2</div><div class="room-bar-sub">ชั้น 5 · ห้องประชุมเล็ก 13 ที่นั่ง</div></div>
+      <div class="room-bar-badge loading-badge" id="badge-2">กำลังโหลด...</div>
+    </div>
+    <div class="room-bar">
+      <div class="room-dot" style="background:var(--room-3)"></div>
+      <div class="room-bar-info"><div class="room-bar-name">ห้องประชุม 3</div><div class="room-bar-sub">ชั้น 5 · ห้องประชุมเล็ก 13 ที่นั่ง</div></div>
+      <div class="room-bar-badge loading-badge" id="badge-3">กำลังโหลด...</div>
+    </div>
+    <div class="room-bar">
+      <div class="room-dot" style="background:var(--room-4)"></div>
+      <div class="room-bar-info"><div class="room-bar-name">ห้องสมัครสโมสร</div><div class="room-bar-sub">ชั้น 2 · ห้องจัดเลี้ยง</div></div>
+      <div class="room-bar-badge loading-badge" id="badge-4">กำลังโหลด...</div>
+    </div>
+  </div>
+</div>
+
+<!-- RIGHT -->
+<div class="right">
+  <div class="login-card">
+    <h2>ยินดีต้อนรับ</h2>
+    <p>เข้าสู่ระบบเพื่อจองและจัดการห้องประชุม</p>
+
+    <div class="status-msg" id="statusMsg">
+      <div class="spinner"></div>
+      <span id="statusText">กำลังตรวจสอบสถานะ…</span>
+    </div>
+
+    <button class="btn-google" id="loginBtn">
+      <svg width="18" height="18" viewBox="0 0 18 18">
+        <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/>
+        <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.909-2.259c-.806.54-1.837.86-3.047.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/>
+        <path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/>
+        <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/>
+      </svg>
+      เข้าสู่ระบบด้วย Google
+    </button>
+
+    <button class="btn-guest" id="guestBtn">ดูตารางโดยไม่เข้าสู่ระบบ</button>
+
+    <div class="footer-note">
+      การเข้าสู่ระบบถือว่าคุณยอมรับนโยบาย<br>การจองห้องประชุมขององค์กร
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import {
+  getAuth, signInWithPopup, GoogleAuthProvider,
+  onAuthStateChanged, setPersistence, browserLocalPersistence
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBIoOIk7O-oEt7yCgGGFq4w1ONXUuZBj0g",
+  authDomain: "minburi-meeting-room-f34c4.firebaseapp.com",
+  projectId: "minburi-meeting-room-f34c4",
+  storageBucket: "minburi-meeting-room-f34c4.firebasestorage.app",
+  messagingSenderId: "520841331829",
+  appId: "1:520841331829:web:ad701c93283cd53b48243c"
+};
+
+const app      = initializeApp(firebaseConfig);
+const auth     = getAuth(app);
+const db       = getFirestore(app);
+const provider = new GoogleAuthProvider();
+
+const loginBtn  = document.getElementById("loginBtn");
+const guestBtn  = document.getElementById("guestBtn");
+const statusMsg = document.getElementById("statusMsg");
+const statusText = document.getElementById("statusText");
+
+// ── AUTH ─────────────────────────────────────────────────────
+function showLoading(msg) {
+  statusMsg.className = "status-msg loading";
+  statusText.textContent = msg;
+  loginBtn.disabled = true;
+}
+function showError(msg) {
+  statusMsg.className = "status-msg error";
+  statusMsg.querySelector(".spinner").style.display = "none";
+  statusText.textContent = msg;
+  loginBtn.disabled = false;
+}
+function hideStatus() {
+  statusMsg.style.display = "none";
+  loginBtn.disabled = false;
+}
+
+try { await setPersistence(auth, browserLocalPersistence); } catch(e) {}
+
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    showLoading("เข้าสู่ระบบแล้ว กำลังนำทาง…");
+    window.location.href = "room-booking.html";
+  } else {
+    hideStatus();
+  }
+});
+
+loginBtn.addEventListener("click", async () => {
+  showLoading("กำลังเปิด Google…");
+  try {
+    const result = await signInWithPopup(auth, provider);
+    if (result.user) {
+      showLoading("เข้าสู่ระบบสำเร็จ กำลังนำทาง…");
+      window.location.href = "room-booking.html";
+    }
+  } catch(e) {
+    console.error(e.code, e.message);
+    showError("เข้าสู่ระบบไม่สำเร็จ: " + (e.code || e.message));
+  }
+});
+
+guestBtn.addEventListener("click", () => {
+  window.location.href = "room-booking.html?guest=1";
+});
+
+// ── LIVE ROOM STATUS ──────────────────────────────────────────
+const ROOMS = ["1","2","3","4"];
+
+async function loadRoomStatus() {
+  try {
+    const snap = await getDocs(collection(db, "bookings"));
+    const now  = Date.now();
+
+    // build a map: roomId → { active, upcoming }
+    const status = {};
+    ROOMS.forEach(r => { status[r] = { active: false, upcoming: false }; });
+
+    snap.forEach(d => {
+      const data = d.data();
+      if (!["approved"].includes(data.status)) return;
+      if (!ROOMS.includes(data.room)) return;
+
+      const start = data.start?.toDate ? data.start.toDate().getTime() : new Date(data.start).getTime();
+      const end   = data.end?.toDate   ? data.end.toDate().getTime()   : new Date(data.end).getTime();
+
+      if (now >= start && now < end) {
+        // currently in use
+        status[data.room].active = true;
+      } else if (start > now && start - now <= 60 * 60 * 1000) {
+        // starts within the next 60 minutes
+        status[data.room].upcoming = true;
+      }
+    });
+
+    // update badges
+    ROOMS.forEach(r => {
+      const badge = document.getElementById("badge-" + r);
+      if (!badge) return;
+      if (status[r].active) {
+        badge.textContent = "🔴 กำลังใช้งาน";
+        badge.className   = "room-bar-badge busy";
+      } else if (status[r].upcoming) {
+        badge.textContent = "🟡 มีการจองเร็วๆ นี้";
+        badge.className   = "room-bar-badge soon";
+      } else {
+        badge.textContent = "🟢 ว่าง";
+        badge.className   = "room-bar-badge free";
+      }
+    });
+
+  } catch(e) {
+    // if Firestore fails just show unknown
+    ROOMS.forEach(r => {
+      const badge = document.getElementById("badge-" + r);
+      if (badge) { badge.textContent = "—"; badge.className = "room-bar-badge loading-badge"; }
+    });
+  }
+}
+
+loadRoomStatus();
+// refresh every 60 seconds so status stays live
+setInterval(loadRoomStatus, 60000);
+</script>
+</body>
+</html>

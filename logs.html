@@ -247,6 +247,8 @@
           <th>ห้อง</th>
           <th>วันที่ / เวลา</th>
           <th>ผู้จอง</th>
+          <th>ศาล / หน่วยงาน</th>
+          <th>เบอร์โทร</th>
           <th>สถานะ</th>
           <th>บันทึกเมื่อ</th>
         </tr>
@@ -304,16 +306,30 @@ let searchQuery  = "";
 let currentPage  = 1;
 
 // ── AUTH ─────────────────────────────────────────────────────
-onAuthStateChanged(auth, (user) => {
-  if (!user) { window.location.href = "login.html"; return; }
-  if (!ADMIN_EMAILS.includes(user.email)) {
-    window.location.href = "room-booking.html"; return;
+// Check local session first
+const savedLocal = sessionStorage.getItem("localUser");
+if (savedLocal) {
+  const localUser = JSON.parse(savedLocal);
+  if (localUser.role !== "admin") {
+    window.location.href = "room-booking.html";
+  } else {
+    document.getElementById("userChip").style.display = "flex";
+    document.getElementById("userAvatar").textContent = localUser.displayName[0].toUpperCase();
+    document.getElementById("userName").textContent   = localUser.displayName;
+    loadLogs();
   }
-  document.getElementById("userChip").style.display = "flex";
-  document.getElementById("userAvatar").textContent = user.email[0].toUpperCase();
-  document.getElementById("userName").textContent   = user.email.split("@")[0];
-  loadLogs();
-});
+} else {
+  onAuthStateChanged(auth, (user) => {
+    if (!user) { window.location.href = "login.html"; return; }
+    if (!ADMIN_EMAILS.includes(user.email)) {
+      window.location.href = "room-booking.html"; return;
+    }
+    document.getElementById("userChip").style.display = "flex";
+    document.getElementById("userAvatar").textContent = user.email[0].toUpperCase();
+    document.getElementById("userName").textContent   = user.email.split("@")[0];
+    loadLogs();
+  });
+}
 
 // ── LOAD ─────────────────────────────────────────────────────
 async function loadLogs() {
@@ -445,6 +461,8 @@ function renderTable() {
         <div class="time-sub">${fmtTime(b.start)} – ${fmtTime(b.end)}</div>
       </td>
       <td class="user-cell">${esc(b.user || "—")}</td>
+      <td class="user-cell">${esc(b.court || "—")}</td>
+      <td class="user-cell">${esc(b.phone || "—")}</td>
       <td>${statusBadge(b)}</td>
       <td>
         <div class="time-cell">${actionTime ? fmtDateTime(actionTime) : "—"}</div>

@@ -378,6 +378,14 @@
     </div>
     <div class="modal-body">
       <div class="form-row">
+        <label class="form-label">ศาล / หน่วยงาน</label>
+        <input class="form-input" id="bookCourt" placeholder="ศาลแพ่งมีนบุรี" readonly style="background:var(--surface);color:var(--muted)" />
+      </div>
+      <div class="form-row">
+        <label class="form-label">เบอร์โทรติดต่อ</label>
+        <input class="form-input" id="bookPhone" type="tel" placeholder="0XX-XXX-XXXX" />
+      </div>
+      <div class="form-row">
         <label class="form-label">ชื่อการประชุม / กิจกรรม</label>
         <input class="form-input" id="bookTitle" placeholder="เช่น ประชุมทีมฝ่าย IT" />
       </div>
@@ -494,14 +502,30 @@ const SLOTS = {
   fullday:   { start: "08:30", end: "16:30" }
 };
 
-let currentUser  = null;
-let isAdmin      = false;
-let isGuest      = false;
-let bookings     = [];
-let currentView  = "day";
-let currentDate  = new Date();
-let visibleRooms = new Set(ROOMS);
+let currentUser   = null; // Firebase Auth user (Google login)
+let localUser     = null; // username/password login user
+let isAdmin       = false;
+let isGuest       = false;
+let bookings      = [];
+let currentView   = "day";
+let currentDate   = new Date();
+let visibleRooms  = new Set(ROOMS);
 let currentEditId = null;
+
+// helper: get display name for bookings
+function getBookingUser() {
+  if (localUser) return localUser.username;
+  if (currentUser) return currentUser.email;
+  return "guest";
+}
+
+function getUserCourt() {
+  return localUser?.court || "";
+}
+
+function getUserPhone() {
+  return localUser?.phone || "";
+}
 
 // ── AUTH ─────────────────────────────────────────────────────
 const urlParams = new URLSearchParams(window.location.search);
@@ -517,20 +541,46 @@ if (isGuest) {
   buildRoomFilters();
   loadBookings();
 } else {
-  onAuthStateChanged(auth, (user) => {
-    if (!user) { window.location.href = "login.html"; return; }
-    currentUser = user;
-    isAdmin = ADMIN_EMAILS.includes(user.email);
-    initUI(user);
-  });
+  // Check username/password session first
+  const savedLocal = sessionStorage.getItem("localUser");
+  if (savedLocal) {
+    localUser = JSON.parse(savedLocal);
+    isAdmin   = localUser.role === "admin";
+    initLocalUI(localUser);
+  } else {
+    // Fall back to Firebase Auth (Google login)
+    onAuthStateChanged(auth, (user) => {
+      if (!user) { window.location.href = "login.html"; return; }
+      currentUser = user;
+      isAdmin = ADMIN_EMAILS.includes(user.email);
+      initFirebaseUI(user);
+    });
+  }
 }
 
 document.getElementById("logoutBtn").addEventListener("click", async () => {
-  await signOut(auth);
+  sessionStorage.removeItem("localUser");
+  if (auth.currentUser) await signOut(auth);
   window.location.href = "login.html";
 });
 
-function initUI(user) {
+function initLocalUI(u) {
+  document.getElementById("userChip").style.display = "flex";
+  document.getElementById("userAvatar").textContent = u.displayName[0].toUpperCase();
+  document.getElementById("userName").textContent   = u.displayName;
+  const rb = document.getElementById("roleBadge");
+  rb.textContent = isAdmin ? "ผู้ดูแล" : "ผู้ใช้งาน";
+  rb.className   = "role-badge " + (isAdmin ? "admin" : "user");
+  document.getElementById("logoutBtn").style.display = "block";
+  if (isAdmin) {
+    document.getElementById("pendingPanel").style.display = "block";
+    document.getElementById("logsBtn").style.display = "block";
+  }
+  buildRoomFilters();
+  loadBookings();
+}
+
+function initFirebaseUI(user) {
   document.getElementById("userChip").style.display = "flex";
   document.getElementById("userAvatar").textContent = user.email[0].toUpperCase();
   document.getElementById("userName").textContent   = user.email.split("@")[0];
@@ -539,9 +589,9 @@ function initUI(user) {
   rb.className   = "role-badge " + (isAdmin ? "admin" : "user");
   document.getElementById("logoutBtn").style.display = "block";
   if (isAdmin) {
-  document.getElementById("pendingPanel").style.display = "block";
-  document.getElementById("logsBtn").style.display = "block";
-}
+    document.getElementById("pendingPanel").style.display = "block";
+    document.getElementById("logsBtn").style.display = "block";
+  }
   buildRoomFilters();
   loadBookings();
 }
@@ -550,19 +600,18 @@ function initUI(user) {
 function loadBookings() {
   onSnapshot(collection(db, "bookings"), (snap) => {
     // detect status changes for current user
-    if (currentUser) {
-      snap.docChanges().forEach(change => {
-        if (change.type === "modified") {
-          const data = change.doc.data();
-          if (data.user === currentUser.email && data.status === "rejected") {
-            toast(`❌ คำขอจอง "${data.title}" ถูกปฏิเสธ`);
-          }
-          if (data.user === currentUser.email && data.status === "approved") {
-            toast(`✅ คำขอจอง "${data.title}" ได้รับการอนุมัติแล้ว`);
-          }
+    const myId = getBookingUser();
+    snap.docChanges().forEach(change => {
+      if (change.type === "modified") {
+        const data = change.doc.data();
+        if (data.user === myId && data.status === "rejected") {
+          toast(`❌ คำขอจอง "${data.title}" ถูกปฏิเสธ`);
         }
-      });
-    }
+        if (data.user === myId && data.status === "approved") {
+          toast(`✅ คำขอจอง "${data.title}" ได้รับการอนุมัติแล้ว`);
+        }
+      }
+    });
 
     bookings = [];
     snap.forEach(d => {
@@ -584,9 +633,13 @@ function loadBookings() {
 
 async function addBooking(data) {
   await addDoc(collection(db, "bookings"), {
-    ...data, user: currentUser.email, status: "pending", createdAt: new Date()
+    ...data,
+    user:      getBookingUser(),
+    court:     getUserCourt(),
+    phone:     data.phone || getUserPhone(),
+    status:    "pending",
+    createdAt: new Date()
   });
-  await loadBookings();
   toast("ส่งคำขอจองแล้ว — รอการอนุมัติจากผู้ดูแลระบบ");
 }
 
@@ -724,6 +777,8 @@ function renderPending() {
         ${ROOM_META[b.room]?.name || b.room}<br>
         ${fmtDT(b.start)} – ${fmtTime(b.end)}<br>
         <span style="color:var(--muted2)">${esc(b.user)}</span>
+        ${b.court ? `<br><span style="color:var(--muted2)">🏛 ${esc(b.court)}</span>` : ""}
+        ${b.phone ? `<br><span style="color:var(--muted2)">📞 ${esc(b.phone)}</span>` : ""}
       </div>
       <div class="pending-actions">
         <button class="btn-approve">✓ อนุมัติ</button>
@@ -979,6 +1034,8 @@ function openBookingModal(room, start, editId = null) {
   currentEditId = editId;
   document.getElementById("bookRoom").value  = room;
   document.getElementById("bookDate").value  = toLocalDateValue(start);
+  document.getElementById("bookCourt").value = getUserCourt();
+  document.getElementById("bookPhone").value = getUserPhone();
   document.getElementById("conflictWarn").classList.remove("show");
   document.getElementById("modalSubmit").disabled = false;
   document.querySelectorAll(".slot-btn").forEach(b => b.classList.remove("active"));
@@ -1042,8 +1099,9 @@ function checkConflict() {
 
 document.getElementById("modalSubmit").addEventListener("click", async () => {
   const title = document.getElementById("bookTitle").value.trim();
-const desc  = document.getElementById("bookDesc").value.trim();
-const room  = document.getElementById("bookRoom").value;
+  const desc  = document.getElementById("bookDesc").value.trim();
+  const room  = document.getElementById("bookRoom").value;
+  const phone = document.getElementById("bookPhone").value.trim();
   const { start, end } = getModalDateTimes();
 
   if (!title) { document.getElementById("bookTitle").focus(); return; }
@@ -1054,12 +1112,12 @@ const room  = document.getElementById("bookRoom").value;
 
   if (currentEditId) {
     await updateDoc(doc(db, "bookings", currentEditId), {
-  title, description: desc, room, start, end, status: "pending", editedAt: new Date()
-});
-    await loadBookings();
+      title, description: desc, room, start, end, phone,
+      status: "pending", editedAt: new Date()
+    });
     toast("แก้ไขการจองแล้ว — รอการอนุมัติใหม่อีกครั้ง");
   } else {
-    await addBooking({ room, start, end, title, description: desc });
+    await addBooking({ room, start, end, title, description: desc, phone });
   }
   closeBookingModal();
 });
@@ -1089,6 +1147,14 @@ function openDetailModal(b) {
       <div class="detail-field-label">จองโดย</div>
       <div class="detail-field-value">${esc(b.user)}</div>
     </div>
+    ${b.court ? `<div class="detail-field">
+      <div class="detail-field-label">ศาล / หน่วยงาน</div>
+      <div class="detail-field-value">${esc(b.court)}</div>
+    </div>` : ""}
+    ${b.phone ? `<div class="detail-field">
+      <div class="detail-field-label">เบอร์โทรติดต่อ</div>
+      <div class="detail-field-value">${esc(b.phone)}</div>
+    </div>` : ""}
     <div class="detail-field">
       <div class="detail-field-label">สถานะ</div>
       <span class="status-badge ${getStatusClass(b)}">

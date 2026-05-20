@@ -261,6 +261,32 @@
     .slot-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
     .slot-btn.active { border-color: var(--accent); background: var(--accent-bg); color: var(--accent); }
 
+    /* ── MINI CALENDAR ── */
+    .mini-cal-wrap { border: 1.5px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--white); margin-top: 8px; }
+    .mini-cal-nav { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: var(--surface); border-bottom: 1px solid var(--line); }
+    .mini-cal-month { font-size: 14px; font-weight: 600; color: var(--ink); }
+    .mini-cal-arrow { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border: 1.5px solid var(--line); background: var(--white); border-radius: 6px; cursor: pointer; font-size: 16px; color: var(--muted); transition: all 0.15s; }
+    .mini-cal-arrow:hover { border-color: #bbbbc8; color: var(--ink); }
+    .mini-cal-dow-row { display: grid; grid-template-columns: repeat(7,1fr); padding: 8px 8px 0; }
+    .mini-cal-dow { text-align: center; font-size: 11px; font-weight: 700; color: var(--muted2); padding: 4px 0; }
+    .mini-cal-days { display: grid; grid-template-columns: repeat(7,1fr); padding: 0 8px 8px; gap: 3px; }
+    .mini-cal-day { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border-radius: 6px; font-size: 13px; cursor: pointer; transition: all 0.1s; color: var(--ink); background: var(--line2); border: 2px solid transparent; user-select: none; }
+    .mini-cal-day:hover { background: #e0e7ff; }
+    .mini-cal-day.other-month { color: var(--muted2); background: transparent; }
+    .mini-cal-day.other-month:hover { background: var(--line2); }
+    .mini-cal-day.today { border-color: var(--accent); font-weight: 700; }
+    .mini-cal-day.selected { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .mini-cal-day.selected:hover { background: #1a46e0; }
+    .mini-cal-day.has-conflict { background: #fff3cd; border-color: #f5a623; color: #7a5000; }
+    .mini-cal-day.has-conflict.selected { background: #f5a623; color: #fff; border-color: #d4890a; }
+    .mini-cal-day.past { opacity: 0.3; cursor: not-allowed; pointer-events: none; }
+    
+    .date-chip { display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px; border-radius: 20px; font-size: 12px; font-weight: 500; background: var(--accent-bg); color: var(--accent); cursor: pointer; transition: all 0.1s; }
+    .date-chip:hover { background: #d0dbff; }
+    .date-chip.conflict-chip { background: #fff3cd; color: #7a5000; }
+    .date-chip-remove { cursor: pointer; font-size: 14px; line-height: 1; }
+
+
     .divider-line {
       display: flex; align-items: center; gap: 10px; margin: 12px 0;
     }
@@ -403,8 +429,28 @@
         </select>
       </div>
       <div class="form-row">
-        <label class="form-label">วันที่</label>
-        <input class="form-input" type="date" id="bookDate" />
+        <label class="form-label">เลือกวันที่ <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted2)">(คลิกเลือกได้หลายวัน)</span></label>
+        <div class="mini-cal-wrap">
+          <div class="mini-cal-nav">
+            <button type="button" class="mini-cal-arrow" id="miniCalPrev">‹</button>
+            <span class="mini-cal-month" id="miniCalTitle"></span>
+            <button type="button" class="mini-cal-arrow" id="miniCalNext">›</button>
+          </div>
+          <div class="mini-cal-dow-row">
+            <div class="mini-cal-dow">อา</div><div class="mini-cal-dow">จ</div>
+            <div class="mini-cal-dow">อ</div><div class="mini-cal-dow">พ</div>
+            <div class="mini-cal-dow">พฤ</div><div class="mini-cal-dow">ศ</div>
+            <div class="mini-cal-dow">ส</div>
+          </div>
+          <div class="mini-cal-days" id="miniCalGrid"></div>
+        </div>
+        <div style="margin-top:8px;display:flex;gap:12px;flex-wrap:wrap">
+          <span style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:3px;background:var(--accent);display:inline-block"></span>เลือกแล้ว</span>
+          <span style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:3px;background:#f5a623;display:inline-block"></span>มีการจองอยู่แล้ว</span>
+          <span style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:3px;background:var(--line2);display:inline-block"></span>ว่าง</span>
+        </div>
+        <div id="selectedDatesList" style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px;min-height:20px"></div>
+        <input type="hidden" id="bookDate" />
       </div>
       <div class="form-row">
         <label class="form-label">เลือกช่วงเวลาด่วน</label>
@@ -511,6 +557,8 @@ let currentView   = "day";
 let currentDate   = new Date();
 let visibleRooms  = new Set(ROOMS);
 let currentEditId = null;
+let selectedDates = new Set();
+let miniCalDate   = new Date();
 
 // helper: get display name for bookings
 function getBookingUser() {
@@ -631,59 +679,87 @@ function loadBookings() {
   });
 }
 
-async function addBooking(data) {
-  await addDoc(collection(db, "bookings"), {
-    ...data,
-    user:      getBookingUser(),
-    court:     getUserCourt(),
-    phone:     data.phone || getUserPhone(),
-    status:    "pending",
-    createdAt: new Date()
-  });
-  toast("ส่งคำขอจองแล้ว — รอการอนุมัติจากผู้ดูแลระบบ");
+async function addBooking(items) {
+  const groupId = "grp_" + Date.now() + "_" + Math.random().toString(36).substr(2, 5);
+  const user = getBookingUser();
+  const court = getUserCourt();
+  const createdAt = new Date();
+
+  console.log("localUser =", localUser);
+  console.log("user =", user);
+  
+  const batch = items.map(item => addDoc(collection(db, "bookings"), {
+    ...item,
+    user: localUser?.displayName || localUser?.username || user?.email || "unknown",
+    court,
+    phone: item.phone || getUserPhone(),
+    status: "pending",
+    groupId,
+    groupTotal: items.length,
+    createdAt
+  }));
+  
+  await Promise.all(batch);
+  toast(`ส่งคำขอจอง ${items.length} รายการแล้ว — รอการอนุมัติ`);
 }
 
 async function approveBooking(id) {
-  // 1. Approve the target booking
-  await updateDoc(doc(db, "bookings", id), { status: "approved" });
+  const target = bookings.find(b => b.id === id);
+  if (!target) return;
 
-  // 2. Find the booking we just approved
-  const approved = bookings.find(b => b.id === id);
-  if (approved) {
-    // 3. Find all OTHER pending bookings that conflict with it
-    const conflicts = bookings.filter(b => {
-      if (b.id === id)              return false;
-      if (b.status !== "pending")   return false;
-      if (b.room !== approved.room) return false;
-      const bStart = b.start instanceof Date ? b.start.getTime() : new Date(b.start).getTime();
-      const bEnd   = b.end   instanceof Date ? b.end.getTime()   : new Date(b.end).getTime();
-      const aStart = approved.start instanceof Date ? approved.start.getTime() : new Date(approved.start).getTime();
-      const aEnd   = approved.end   instanceof Date ? approved.end.getTime()   : new Date(approved.end).getTime();
-      return bStart < aEnd && bEnd > aStart;
-    });
+  const toApprove = target.groupId 
+    ? bookings.filter(b => b.groupId === target.groupId && b.status === "pending")
+    : [target];
 
-    // 4. Auto-reject them all
-    await Promise.all(conflicts.map(b =>
-  updateDoc(doc(db, "bookings", b.id), { status: "rejected", rejectedAt: new Date(), rejectedReason: "ซ้ำกับการจองที่อนุมัติแล้ว" })
-));
+  let approvedCount = 0;
+  let conflictList = [];
 
-    if (conflicts.length > 0) {
-      toast(`อนุมัติแล้ว ✓ — ยกเลิก ${conflicts.length} คำขอที่ซ้ำกันอัตโนมัติ`);
+  for (const b of toApprove) {
+    if (hasConflict(b.room, b.start, b.end, b.id)) {
+      conflictList.push(b);
     } else {
-      toast("อนุมัติการจองเรียบร้อยแล้ว ✓");
+      await updateDoc(doc(db, "bookings", b.id), { status: "approved", approvedAt: new Date() });
+      approvedCount++;
+      
+      // Auto-reject OTHER pending conflicts
+      const others = bookings.filter(x => 
+        x.id !== b.id && x.status === "pending" && x.room === b.room &&
+        x.start.getTime() < b.end.getTime() && x.end.getTime() > b.start.getTime()
+      );
+      await Promise.all(others.map(x => 
+        updateDoc(doc(db, "bookings", x.id), { status: "rejected", rejectedAt: new Date(), rejectedReason: "ซ้ำกับการจองที่อนุมัติแล้ว" })
+      ));
     }
-  } else {
-    toast("อนุมัติการจองเรียบร้อยแล้ว ✓");
   }
 
-  await loadBookings();
+  if (conflictList.length > 0) {
+    const names = conflictList.map(c => fmtDT(c.start).split(" ")[0]).join(", ");
+    alert(`อนุมัติสำเร็จ ${approvedCount} รายการ\nพบข้อขัดแย้ง ${conflictList.length} รายการ (วันที่: ${names})\nกรุณาติดต่อผู้จอง: ${target.phone || "ไม่ระบุ"}`);
+  } else {
+    toast(`อนุมัติการจองทั้งหมด ${approvedCount} รายการเรียบร้อยแล้ว ✓`);
+  }
+
+   await loadBookings();
+  toast(`ปฏิเสธคำขอจองทั้งหมด ${toReject.length} รายการแล้ว`);
 }
 
 async function rejectBooking(id) {
-  await updateDoc(doc(db, "bookings", id), { status: "rejected", rejectedAt: new Date() });
+  const target = bookings.find(b => b.id === id);
+  if (!target) return;
+  
+  const toReject = target.groupId 
+    ? bookings.filter(b => b.groupId === target.groupId && b.status === "pending")
+    : [target];
+
+  await Promise.all(toReject.map(b => 
+    updateDoc(doc(db, "bookings", b.id), { status: "rejected", rejectedAt: new Date() })
+  ));
+  
   await loadBookings();
-  toast("ปฏิเสธคำขอจองแล้ว");
+  toast(`ปฏิเสธคำขอจองทั้งหมด ${toReject.length} รายการแล้ว`);
 }
+
+
 
 async function deleteBooking(id) {
   const b = bookings.find(x => x.id === id);
@@ -694,7 +770,11 @@ async function deleteBooking(id) {
   await updateDoc(doc(db, "bookings", id), {
     status: "deleted",
     deletedAt: new Date(),
-    deletedBy: currentUser?.email || "unknown"
+    deletedBy:
+  localUser?.displayName ||
+  localUser?.username ||
+  currentUser?.email ||
+  "unknown"
   });
   await loadBookings();
   closeDetail();
@@ -761,28 +841,39 @@ function updateRoomCounts() {
 
 // ── PENDING PANEL ─────────────────────────────────────────────
 function renderPending() {
-  const list    = document.getElementById("pendingList");
+  const list = document.getElementById("pendingList");
   const pending = bookings.filter(b => b.status === "pending");
   if (!pending.length) {
     list.innerHTML = '<div class="empty-pending">ไม่มีรายการรออนุมัติ</div>';
     return;
   }
-  list.innerHTML = "";
+  
+  // Group by groupId
+  const groups = {};
   pending.forEach(b => {
+    const gid = b.groupId || b.id;
+    if (!groups[gid]) groups[gid] = [];
+    groups[gid].push(b);
+  });
+
+  list.innerHTML = "";
+  Object.values(groups).forEach(items => {
+    const b = items[0];
+    const isGroup = items.length > 1;
     const el = document.createElement("div");
     el.className = "pending-item";
     el.innerHTML = `
-      <div class="pending-item-title">${esc(b.title)}</div>
-      <div class="pending-item-meta">
+      <div class="pending-item-title">${esc(b.title)} ${isGroup ? `<span style="color:var(--accent)">[${items.length} วัน]</span>` : ""}</div>
+            <div class="pending-item-meta">
         ${ROOM_META[b.room]?.name || b.room}<br>
-        ${fmtDT(b.start)} – ${fmtTime(b.end)}<br>
+        ${isGroup ? `${fmtDT(b.start).split(" (")[0]} ... ${fmtDT(items[items.length-1].start).split(" (")[0]}` : fmtDTRange(b.start, b.end)}<br>
         <span style="color:var(--muted2)">${esc(b.user)}</span>
         ${b.court ? `<br><span style="color:var(--muted2)">🏛 ${esc(b.court)}</span>` : ""}
         ${b.phone ? `<br><span style="color:var(--muted2)">📞 ${esc(b.phone)}</span>` : ""}
       </div>
       <div class="pending-actions">
-        <button class="btn-approve">✓ อนุมัติ</button>
-        <button class="btn-reject">✕ ปฏิเสธ</button>
+        <button class="btn-approve">✓ อนุมัติ${isGroup ? "ทั้งหมด" : ""}</button>
+        <button class="btn-reject">✕ ปฏิเสธ${isGroup ? "ทั้งหมด" : ""}</button>
       </div>
     `;
     el.querySelector(".btn-approve").onclick = () => approveBooking(b.id);
@@ -1011,6 +1102,129 @@ function populateTimeSelects() {
   }
 }
 
+// ── MINI CALENDAR ────────────────────────────────────────────
+function renderMiniCal() {
+  const grid = document.getElementById("miniCalGrid");
+  const title = document.getElementById("miniCalTitle");
+  grid.innerHTML = "";
+  
+  const year = miniCalDate.getFullYear();
+  const month = miniCalDate.getMonth();
+  title.textContent = `${MONTH_NAMES[month]} ${year + 543}`;
+  
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const prevMonthDays = new Date(year, month, 0).getDate();
+  
+  // Prev month days
+  for (let i = firstDay - 1; i >= 0; i--) {
+    const el = document.createElement("div");
+    el.className = "mini-cal-day other-month";
+    el.textContent = prevMonthDays - i;
+    grid.appendChild(el);
+  }
+  
+  const today = new Date();
+  const room = document.getElementById("bookRoom").value;
+  const startVal = document.getElementById("bookStart").value;
+  const endVal = document.getElementById("bookEnd").value;
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const date = new Date(year, month, d);
+    const dateStr = toLocalDateValue(date);
+    const el = document.createElement("div");
+    el.className = "mini-cal-day";
+    el.textContent = d;
+    
+    if (sameDay(date, today)) el.classList.add("today");
+    if (selectedDates.has(dateStr)) el.classList.add("selected");
+    
+    // Past dates
+    const todayClear = startOfDay(new Date());
+    if (date < todayClear) el.classList.add("past");
+
+    // Check conflict for this specific day
+    if (startVal && endVal) {
+      const start = new Date(`${dateStr}T${startVal}`);
+      const end = new Date(`${dateStr}T${endVal}`);
+      if (hasConflict(room, start, end, currentEditId)) {
+        el.classList.add("has-conflict");
+      }
+    }
+    
+    el.onclick = () => {
+      if (date < todayClear) return;
+      if (selectedDates.has(dateStr)) {
+        selectedDates.delete(dateStr);
+      } else {
+        selectedDates.add(dateStr);
+      }
+      renderMiniCal();
+      updateSelectedDatesList();
+    };
+    grid.appendChild(el);
+  }
+  
+  // Next month days
+  const remaining = 42 - grid.children.length;
+  for (let i = 1; i <= remaining; i++) {
+    const el = document.createElement("div");
+    el.className = "mini-cal-day other-month";
+    el.textContent = i;
+    grid.appendChild(el);
+  }
+}
+
+function updateSelectedDatesList() {
+  const list = document.getElementById("selectedDatesList");
+  list.innerHTML = "";
+  
+  const sorted = Array.from(selectedDates).sort();
+  const room = document.getElementById("bookRoom").value;
+  const startVal = document.getElementById("bookStart").value;
+  const endVal = document.getElementById("bookEnd").value;
+
+  if (sorted.length === 0) {
+    list.innerHTML = '<div style="font-size:12px;color:var(--muted2);margin-top:6px">ยังไม่ได้เลือกวัน</div>';
+  } else {
+    sorted.forEach(dateStr => {
+      const date = new Date(dateStr);
+      const chip = document.createElement("div");
+      chip.className = "date-chip";
+      
+      if (startVal && endVal) {
+        const start = new Date(`${dateStr}T${startVal}`);
+        const end = new Date(`${dateStr}T${endVal}`);
+        if (hasConflict(room, start, end, currentEditId)) {
+          chip.classList.add("conflict-chip");
+        }
+      }
+
+      chip.innerHTML = `
+        ${date.getDate()} ${MONTH_NAMES[date.getMonth()].slice(0,3)}
+        <span class="date-chip-remove">✕</span>
+      `;
+      chip.onclick = () => {
+        selectedDates.delete(dateStr);
+        renderMiniCal();
+        updateSelectedDatesList();
+      };
+      list.appendChild(chip);
+    });
+  }
+  
+  checkConflict();
+}
+
+document.getElementById("miniCalPrev").onclick = () => {
+  miniCalDate.setMonth(miniCalDate.getMonth() - 1);
+  renderMiniCal();
+};
+document.getElementById("miniCalNext").onclick = () => {
+  miniCalDate.setMonth(miniCalDate.getMonth() + 1);
+  renderMiniCal();
+};
+
 // ── SLOT BUTTONS ─────────────────────────────────────────────
 document.querySelectorAll(".slot-btn").forEach(btn => {
   btn.addEventListener("click", () => selectSlot(btn.dataset.slot));
@@ -1033,34 +1247,41 @@ function openBookingModal(room, start, editId = null) {
   // 2. Set field values
   currentEditId = editId;
   document.getElementById("bookRoom").value  = room;
-  document.getElementById("bookDate").value  = toLocalDateValue(start);
   document.getElementById("bookCourt").value = getUserCourt();
   document.getElementById("bookPhone").value = getUserPhone();
   document.getElementById("conflictWarn").classList.remove("show");
   document.getElementById("modalSubmit").disabled = false;
   document.querySelectorAll(".slot-btn").forEach(b => b.classList.remove("active"));
 
+  selectedDates.clear();
+  miniCalDate = new Date(start);
+
   if (editId) {
-    // editing: pre-fill title and match times to dropdowns
     const b = bookings.find(x => x.id === editId);
     if (b) {
       document.getElementById("bookTitle").value = b.title;
-document.getElementById("bookDesc").value  = b.description || "";
+      document.getElementById("bookDesc").value  = b.description || "";
+      document.getElementById("bookPhone").value = b.phone || "";
+      selectedDates.add(toLocalDateValue(b.start));
+      
       const startVal = `${String(b.start.getHours()).padStart(2,"0")}:${String(b.start.getMinutes()).padStart(2,"0")}`;
       const endVal   = `${String(b.end.getHours()).padStart(2,"0")}:${String(b.end.getMinutes()).padStart(2,"0")}`;
       document.getElementById("bookStart").value = startVal;
       document.getElementById("bookEnd").value   = endVal;
-      // highlight matching slot if any
+      
       for (const [key, s] of Object.entries(SLOTS)) {
         if (s.start === startVal && s.end === endVal) { selectSlot(key); break; }
       }
     }
   } else {
     document.getElementById("bookTitle").value = "";
-document.getElementById("bookDesc").value  = "";
-    // default: pick morning slot
+    document.getElementById("bookDesc").value  = "";
+    selectedDates.add(toLocalDateValue(start));
     selectSlot("morning");
   }
+  
+  renderMiniCal();
+  updateSelectedDatesList();
 
   document.getElementById("modalTitle").textContent   = editId ? "แก้ไขการจอง" : "จองห้องประชุม";
   document.getElementById("modalSubmit").textContent  = editId ? "บันทึกการแก้ไข" : "ส่งคำขอจอง";
@@ -1082,19 +1303,35 @@ document.getElementById("bookingModal").addEventListener("click", e => { if (e.t
 ["bookStart","bookEnd"].forEach(id => {
   document.getElementById(id).addEventListener("change", () => {
     document.querySelectorAll(".slot-btn").forEach(b => b.classList.remove("active"));
-    checkConflict();
+    renderMiniCal();
+    updateSelectedDatesList();
   });
 });
-["bookRoom","bookDate"].forEach(id => {
-  document.getElementById(id).addEventListener("change", checkConflict);
+["bookRoom"].forEach(id => {
+  document.getElementById(id).addEventListener("change", () => {
+    renderMiniCal();
+    updateSelectedDatesList();
+  });
 });
 
 function checkConflict() {
-  const { start, end } = getModalDateTimes();
-  if (!start || !end || start.getTime() >= end.getTime()) return;
-  const conflict = hasConflict(document.getElementById("bookRoom").value, start, end, currentEditId);
-  document.getElementById("conflictWarn").classList.toggle("show", conflict);
-  document.getElementById("modalSubmit").disabled = conflict;
+  const room = document.getElementById("bookRoom").value;
+  const startVal = document.getElementById("bookStart").value;
+  const endVal = document.getElementById("bookEnd").value;
+  
+  if (!startVal || !endVal || startVal >= endVal) return;
+  
+  let anyConflict = false;
+  selectedDates.forEach(dateStr => {
+    const start = new Date(`${dateStr}T${startVal}`);
+    const end = new Date(`${dateStr}T${endVal}`);
+    if (hasConflict(room, start, end, currentEditId)) {
+      anyConflict = true;
+    }
+  });
+  
+  document.getElementById("conflictWarn").classList.toggle("show", anyConflict);
+  // We don't disable submit here because user might want to "book only available" later
 }
 
 document.getElementById("modalSubmit").addEventListener("click", async () => {
@@ -1102,22 +1339,51 @@ document.getElementById("modalSubmit").addEventListener("click", async () => {
   const desc  = document.getElementById("bookDesc").value.trim();
   const room  = document.getElementById("bookRoom").value;
   const phone = document.getElementById("bookPhone").value.trim();
-  const { start, end } = getModalDateTimes();
+  const startVal = document.getElementById("bookStart").value;
+  const endVal = document.getElementById("bookEnd").value;
 
   if (!title) { document.getElementById("bookTitle").focus(); return; }
-  if (!start || !end || start >= end) { toast("กรุณาเลือกช่วงเวลา"); return; }
-  if (hasConflict(room, start, end, currentEditId)) { toast("เวลาซ้ำกัน — กรุณาเลือกช่วงเวลาอื่น"); return; }
+  if (selectedDates.size === 0) { toast("กรุณาเลือกอย่างน้อย 1 วัน"); return; }
+  if (!startVal || !endVal || startVal >= endVal) { toast("กรุณาเลือกช่วงเวลาที่ถูกต้อง"); return; }
+
+  const items = [];
+  const conflicts = [];
+  
+  selectedDates.forEach(dateStr => {
+    const start = new Date(`${dateStr}T${startVal}`);
+    const end = new Date(`${dateStr}T${endVal}`);
+    if (hasConflict(room, start, end, currentEditId)) {
+      conflicts.push(dateStr);
+    } else {
+      items.push({ room, start, end, title, description: desc, phone });
+    }
+  });
+
+  if (conflicts.length > 0) {
+    const confirmMsg = `มี ${conflicts.length} วันที่เวลาซ้ำกับคนอื่น:\n${conflicts.join(", ")}\n\nคุณต้องการจองเฉพาะวันที่ว่าง (${items.length} วัน) หรือไม่?`;
+    if (items.length === 0) {
+      alert("ทุกวันที่เลือกมีการจองซ้ำกันทั้งหมด กรุณาเลือกวันหรือเวลาใหม่");
+      return;
+    }
+    if (!confirm(confirmMsg)) return;
+  }
 
   document.getElementById("modalSubmit").disabled = true;
 
   if (currentEditId) {
-    await updateDoc(doc(db, "bookings", currentEditId), {
-      title, description: desc, room, start, end, phone,
-      status: "pending", editedAt: new Date()
-    });
-    toast("แก้ไขการจองแล้ว — รอการอนุมัติใหม่อีกครั้ง");
+    // Edit currently only supports single day (the original logic)
+    // or we can just update the first selected one.
+    // For simplicity in this complex request, we treat edit as single update.
+    const first = items[0];
+    if (first) {
+      await updateDoc(doc(db, "bookings", currentEditId), {
+        title, description: desc, room, start: first.start, end: first.end, phone,
+        status: "pending", editedAt: new Date()
+      });
+      toast("แก้ไขการจองแล้ว — รอการอนุมัติใหม่อีกครั้ง");
+    }
   } else {
-    await addBooking({ room, start, end, title, description: desc, phone });
+    await addBooking(items);
   }
   closeBookingModal();
 });
@@ -1141,7 +1407,7 @@ function openDetailModal(b) {
     </div>` : ""}
     <div class="detail-field">
       <div class="detail-field-label">เวลา</div>
-      <div class="detail-field-value">${fmtDT(b.start)} – ${fmtDT(b.end)}</div>
+      <div class="detail-field-value">${fmtDTRange(b.start, b.end)}</div>
     </div>
     <div class="detail-field">
       <div class="detail-field-label">จองโดย</div>
@@ -1170,7 +1436,9 @@ function openDetailModal(b) {
   closeBtn.className = "btn-cancel"; closeBtn.textContent = "ปิด"; closeBtn.onclick = closeDetail;
   footer.appendChild(closeBtn);
 
-  const canEdit = !isGuest && (isAdmin || (currentUser && b.user === currentUser.email));
+  const canEdit = !isGuest && b.status === "pending" && 
+  (isAdmin || (currentUser && b.user === currentUser.email) || 
+  (localUser && b.user === localUser.username));
   if (canEdit) {
     const editBtn = document.createElement("button");
     editBtn.className   = "btn-cancel";
@@ -1182,7 +1450,12 @@ function openDetailModal(b) {
     footer.appendChild(editBtn);
   }
 
-  const canDelete = !isGuest && (isAdmin || (currentUser && b.user === currentUser.email));
+  const canDelete = !isGuest && (isAdmin || (
+  b.status === "pending" && (
+    (currentUser && b.user === currentUser.email) ||
+    (localUser && b.user === localUser.username)
+  )
+));
   if (canDelete) {
     const delBtn = document.createElement("button");
     delBtn.className   = "btn-danger";
@@ -1266,7 +1539,12 @@ function fmtTime(d) {
   return `${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")} น.`;
 }
 function fmtDT(d) {
-  return `${d.getDate()} ${MONTH_NAMES[d.getMonth()].slice(0,3)} ${fmtTime(d)}`;
+  const monthAbbr = ["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
+  return `${d.getDate()} ${monthAbbr[d.getMonth()]} ${d.getFullYear()+543} (${fmtTime(d)})`;
+}
+function fmtDTRange(start, end) {
+  const monthAbbr = ["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
+  return `${start.getDate()} ${monthAbbr[start.getMonth()]} ${start.getFullYear()+543} (${fmtTime(start)} – ${fmtTime(end)})`;
 }
 
 function getModalDateTimes() {

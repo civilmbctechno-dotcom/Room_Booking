@@ -408,8 +408,11 @@
         <input class="form-input" id="bookCourt" placeholder="ศาลแพ่งมีนบุรี" readonly style="background:var(--surface);color:var(--muted)" />
       </div>
       <div class="form-row">
-        <label class="form-label">เบอร์โทรติดต่อ</label>
-        <input class="form-input" id="bookPhone" type="tel" placeholder="0XX-XXX-XXXX" />
+        <label class="form-label">เบอร์โทรติดต่อ <span id="phoneRequiredMark" style="color:var(--danger)">*</span></label>
+        <div style="position:relative">
+          <input class="form-input" id="bookPhone" type="tel" placeholder="0XX-XXX-XXXX" />
+          <span id="phoneLockIcon" style="display:none;position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:13px;color:var(--muted2)" title="เบอร์โทรกำหนดโดยหน่วยงาน">🔒</span>
+        </div>
       </div>
       <div class="form-row">
         <label class="form-label">ชื่อการประชุม / กิจกรรม</label>
@@ -535,6 +538,19 @@ const ROOM_META = {
 
 const ADMIN_EMAILS = ["civilmbc.techno@gmail.com"];
 const DAY_NAMES    = ["อา","จ","อ","พ","พฤ","ศ","ส"];
+
+// ── COURT COLORS & PHONES ─────────────────────────────────────
+const COURT_META = {
+  "ศาลแพ่งมีนบุรี":    { color: "#2a5cff", bg: "rgba(42,92,255,0.12)",   phone: "021714150" },
+  "ศาลอาญามีนบุรี":    { color: "#e84040", bg: "rgba(232,64,64,0.12)",   phone: "021714086" },
+  "ศาลเยาวชนมีนบุรี":  { color: "#18b06a", bg: "rgba(24,176,106,0.12)", phone: "0657267633" },
+};
+const DEFAULT_COURT_COLOR = "#9b59b6";
+const DEFAULT_COURT_BG    = "rgba(155,89,182,0.12)";
+
+function getCourtStyle(court) {
+  return COURT_META[court] || { color: DEFAULT_COURT_COLOR, bg: DEFAULT_COURT_BG, phone: "" };
+}
 const MONTH_NAMES  = ["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน",
                       "กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
 
@@ -739,8 +755,7 @@ async function approveBooking(id) {
     toast(`อนุมัติการจองทั้งหมด ${approvedCount} รายการเรียบร้อยแล้ว ✓`);
   }
 
-   await loadBookings();
-  toast(`ปฏิเสธคำขอจองทั้งหมด ${toReject.length} รายการแล้ว`);
+  await loadBookings();
 }
 
 async function rejectBooking(id) {
@@ -812,7 +827,6 @@ function buildRoomFilters() {
         <div class="room-filter-name">${m.name}</div>
         <div class="room-filter-sub">${m.sub}</div>
       </div>
-      <span class="room-filter-count" id="count-${r}">0</span>
     `;
     el.addEventListener("click", () => {
       if (visibleRooms.has(r)) {
@@ -828,15 +842,7 @@ function buildRoomFilters() {
 }
 
 function updateRoomCounts() {
-  const today = new Date();
-  ROOMS.forEach(r => {
-    const el = document.getElementById("count-" + r);
-    if (!el) return;
-    el.textContent = bookings.filter(b =>
-      b.room === r && b.status === "approved" &&
-      b.start >= startOfDay(today) && b.start < endOfDay(today)
-    ).length;
-  });
+  // counts removed — not useful when navigating between days
 }
 
 // ── PENDING PANEL ─────────────────────────────────────────────
@@ -860,16 +866,31 @@ function renderPending() {
   Object.values(groups).forEach(items => {
     const b = items[0];
     const isGroup = items.length > 1;
+    const sorted = [...items].sort((a, z) => a.start - z.start);
+    const cs = getCourtStyle(b.court);
+
+    const daysHTML = sorted.map(item => `
+      <div style="display:flex;align-items:baseline;gap:6px;padding:4px 8px;border-bottom:1px solid var(--line)">
+        <span style="font-size:11px;color:var(--ink);font-weight:500;min-width:88px;flex-shrink:0">${fmtDate(item.start)}</span>
+        <span style="font-size:11px;color:var(--muted2)">${fmtTime(item.start)} – ${fmtTime(item.end)}</span>
+      </div>`).join("");
+
     const el = document.createElement("div");
     el.className = "pending-item";
+    el.style.borderLeft = `3px solid ${cs.color}`;
     el.innerHTML = `
-      <div class="pending-item-title">${esc(b.title)} ${isGroup ? `<span style="color:var(--accent)">[${items.length} วัน]</span>` : ""}</div>
-            <div class="pending-item-meta">
-        ${ROOM_META[b.room]?.name || b.room}<br>
-        ${isGroup ? `${fmtDT(b.start).split(" (")[0]} ... ${fmtDT(items[items.length-1].start).split(" (")[0]}` : fmtDTRange(b.start, b.end)}<br>
-        <span style="color:var(--muted2)">${esc(b.user)}</span>
-        ${b.court ? `<br><span style="color:var(--muted2)">🏛 ${esc(b.court)}</span>` : ""}
-        ${b.phone ? `<br><span style="color:var(--muted2)">📞 ${esc(b.phone)}</span>` : ""}
+      <div class="pending-item-title">
+        ${esc(b.title)}
+        ${isGroup ? `<span style="color:${cs.color};font-size:11px;font-weight:700;margin-left:4px">[${items.length} วัน]</span>` : ""}
+      </div>
+      <div style="font-size:12px;font-weight:600;color:var(--muted2);margin:4px 0 5px">${ROOM_META[b.room]?.name || b.room}</div>
+      <div style="margin-bottom:7px;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--surface)">
+        ${daysHTML}
+      </div>
+      <div class="pending-item-meta" style="margin-bottom:6px">
+        <span>👤 ${esc(b.user)}</span>
+        ${b.court ? `<br><span>🏛 ${esc(b.court)}</span>` : ""}
+        ${b.phone ? `<br><span>📞 ${esc(b.phone)}</span>` : ""}
       </div>
       <div class="pending-actions">
         <button class="btn-approve">✓ อนุมัติ${isGroup ? "ทั้งหมด" : ""}</button>
@@ -917,14 +938,20 @@ function renderDayView() {
       const topPx    = ((b.start - dayStart) / 3600000 - HOUR_START) * HOUR_H;
       const heightPx = Math.max(((b.end - b.start) / 3600000) * HOUR_H, 22);
       const isCompleted = b.status === "completed";
-const isPending   = b.status === "pending";
-html += `<div class="booking-block ${isPending ? "pending" : ""} ${isCompleted ? "completed-block" : ""}"
+      const isPending   = b.status === "pending";
+      const cs = getCourtStyle(b.court);
+      const blockColor = cs.color;
+      const textColor  = isPending ? blockColor : "#fff";
+      const subColor   = isPending ? blockColor : "rgba(255,255,255,0.85)";
+      const statusLabel = getStatusLabel(b);
+      html += `<div class="booking-block ${isPending ? "pending" : ""} ${isCompleted ? "completed-block" : ""}"
   style="top:${topPx}px;height:${heightPx}px;
-         background:${isPending ? "transparent" : m.color};
-         border-color:${m.color}" data-id="${b.id}">
-  <div class="booking-block-title" style="color:${isPending ? m.color : "#fff"}">${esc(b.title)}</div>
-  <div class="booking-block-time" style="color:${isPending ? m.color : "rgba(255,255,255,0.8)"}">${fmtTime(b.start)} – ${fmtTime(b.end)}</div>
-  ${isCompleted ? `<div style="font-size:9px;color:rgba(255,255,255,0.8);margin-top:2px">✓ เสร็จสิ้น</div>` : ""}
+         background:${isPending ? "transparent" : blockColor};
+         border-color:${blockColor}" data-id="${b.id}">
+  ${b.court ? `<div style="font-size:9px;font-weight:700;color:${subColor};opacity:0.9;margin-bottom:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(b.court)}</div>` : ""}
+  <div class="booking-block-title" style="color:${textColor}">${esc(b.title)}</div>
+  <div class="booking-block-time" style="color:${subColor}">${fmtTime(b.start)} – ${fmtTime(b.end)}</div>
+  ${heightPx > 50 ? `<div style="font-size:9px;color:${subColor};margin-top:2px">${statusLabel}</div>` : ""}
 </div>`;
     });
     html += `</div>`;
@@ -997,14 +1024,19 @@ function renderWeekView() {
           const topPx    = ((b.start - dayStart) / 3600000 - HOUR_START) * HOUR_H;
           const heightPx = Math.max(((b.end - b.start) / 3600000) * HOUR_H, 18);
           const isPending   = b.status === "pending";
-const isCompleted = b.status === "completed";
-html += `<div class="booking-block ${isPending ? "pending" : ""} ${isCompleted ? "completed-block" : ""}"
+          const isCompleted = b.status === "completed";
+          const cs = getCourtStyle(b.court);
+          const blockColor = cs.color;
+          const textColor  = isPending ? blockColor : "#fff";
+          const subColor   = isPending ? blockColor : "rgba(255,255,255,0.85)";
+          html += `<div class="booking-block ${isPending ? "pending" : ""} ${isCompleted ? "completed-block" : ""}"
   style="top:${topPx}px;height:${heightPx}px;
-         background:${isPending ? "transparent" : m.color};
-         border-color:${m.color}"
+         background:${isPending ? "transparent" : blockColor};
+         border-color:${blockColor}"
   data-id="${b.id}">
-  <div class="booking-block-title" style="color:${isPending ? m.color : "#fff"};font-size:10px">${esc(b.title)}</div>
-  ${isCompleted ? `<div style="font-size:9px;color:rgba(255,255,255,0.8)">✓ เสร็จสิ้น</div>` : ""}
+  ${b.court && heightPx > 30 ? `<div style="font-size:8px;font-weight:700;color:${subColor};opacity:0.9;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(b.court)}</div>` : ""}
+  <div class="booking-block-title" style="color:${textColor};font-size:10px">${esc(b.title)}</div>
+  ${heightPx > 40 ? `<div style="font-size:9px;color:${subColor}">${fmtTime(b.start)} – ${fmtTime(b.end)}</div>` : ""}
 </div>`;
         });
       html += `</div>`;
@@ -1032,9 +1064,9 @@ function renderMonthView() {
     html += `<div class="month-cell ${otherMonth?"other-month":""} ${isToday?"today":""}" data-date="${d.toISOString()}">`;
     html += `<div class="month-date-num">${d.getDate()}</div>`;
     dayBookings.slice(0,3).forEach(b => {
-      const m = ROOM_META[b.room];
-      html += `<div class="month-event-pill ${b.status}" style="background:${m.bg};color:${m.color}" data-id="${b.id}">
-        <span style="width:5px;height:5px;border-radius:50%;background:${m.color};display:inline-block;flex-shrink:0"></span>
+      const cs = getCourtStyle(b.court);
+      html += `<div class="month-event-pill ${b.status}" style="background:${cs.bg};color:${cs.color}" data-id="${b.id}">
+        <span style="width:5px;height:5px;border-radius:50%;background:${cs.color};display:inline-block;flex-shrink:0"></span>
         ${esc(b.title)}
       </div>`;
     });
@@ -1046,22 +1078,31 @@ function renderMonthView() {
 }
 
 function attachCalEvents(wrap) {
+  const todayStart = startOfDay(new Date());
+
+  function slotForHour(hour) {
+    if (hour >= 7 && hour < 12) return "morning";
+    return "afternoon";
+  }
+
   // day-view columns (have data-room)
   wrap.querySelectorAll(".hour-row[data-room]").forEach(el => {
     el.addEventListener("click", () => {
       if (isGuest) return;
       const start = new Date(currentDate);
       start.setHours(parseInt(el.dataset.hour), 0, 0, 0);
-      openBookingModal(el.dataset.room, start);
+      if (startOfDay(start) < todayStart) return; // block past
+      openBookingModal(el.dataset.room, start, null, slotForHour(parseInt(el.dataset.hour)));
     });
   });
-  // week-view columns (have data-date, no data-room)
+  // week-view columns (have data-date AND data-room)
   wrap.querySelectorAll(".hour-row[data-date]").forEach(el => {
     el.addEventListener("click", () => {
       if (isGuest) return;
       const start = new Date(el.dataset.date);
       start.setHours(parseInt(el.dataset.hour), 0, 0, 0);
-      openBookingModal(ROOMS[0], start);
+      if (startOfDay(start) < todayStart) return; // block past
+      openBookingModal(el.dataset.room, start, null, slotForHour(parseInt(el.dataset.hour)));
     });
   });
   wrap.querySelectorAll(".booking-block").forEach(el => {
@@ -1075,6 +1116,7 @@ function attachCalEvents(wrap) {
     el.addEventListener("click", () => {
       if (isGuest) return;
       const d = new Date(el.dataset.date); d.setHours(9,0,0,0);
+      if (startOfDay(d) < todayStart) return; // block past
       openBookingModal(ROOMS[0], d);
     });
   });
@@ -1240,15 +1282,24 @@ function selectSlot(key) {
 }
 
 // ── BOOKING MODAL ─────────────────────────────────────────────
-function openBookingModal(room, start, editId = null) {
+function openBookingModal(room, start, editId = null, slotKey = "morning") {
   // 1. Populate dropdowns FIRST (must exist before setting .value)
   populateTimeSelects();
 
   // 2. Set field values
   currentEditId = editId;
   document.getElementById("bookRoom").value  = room;
-  document.getElementById("bookCourt").value = getUserCourt();
-  document.getElementById("bookPhone").value = getUserPhone();
+  const court = getUserCourt();
+  document.getElementById("bookCourt").value = court;
+
+  // Phone: default from court if available, but always editable
+  const courtData = COURT_META[court];
+  const phoneInput = document.getElementById("bookPhone");
+  phoneInput.readOnly = false;
+  phoneInput.style.background = "";
+  phoneInput.style.color      = "";
+  document.getElementById("phoneLockIcon").style.display = "none";
+  phoneInput.value = courtData?.phone || getUserPhone() || "";
   document.getElementById("conflictWarn").classList.remove("show");
   document.getElementById("modalSubmit").disabled = false;
   document.querySelectorAll(".slot-btn").forEach(b => b.classList.remove("active"));
@@ -1261,7 +1312,7 @@ function openBookingModal(room, start, editId = null) {
     if (b) {
       document.getElementById("bookTitle").value = b.title;
       document.getElementById("bookDesc").value  = b.description || "";
-      document.getElementById("bookPhone").value = b.phone || "";
+      phoneInput.value = b.phone || courtData?.phone || "";
       selectedDates.add(toLocalDateValue(b.start));
       
       const startVal = `${String(b.start.getHours()).padStart(2,"0")}:${String(b.start.getMinutes()).padStart(2,"0")}`;
@@ -1277,7 +1328,7 @@ function openBookingModal(room, start, editId = null) {
     document.getElementById("bookTitle").value = "";
     document.getElementById("bookDesc").value  = "";
     selectedDates.add(toLocalDateValue(start));
-    selectSlot("morning");
+    selectSlot(slotKey);
   }
   
   renderMiniCal();
@@ -1343,6 +1394,7 @@ document.getElementById("modalSubmit").addEventListener("click", async () => {
   const endVal = document.getElementById("bookEnd").value;
 
   if (!title) { document.getElementById("bookTitle").focus(); return; }
+  if (!phone) { toast("กรุณากรอกเบอร์โทรติดต่อ"); document.getElementById("bookPhone").focus(); return; }
   if (selectedDates.size === 0) { toast("กรุณาเลือกอย่างน้อย 1 วัน"); return; }
   if (!startVal || !endVal || startVal >= endVal) { toast("กรุณาเลือกช่วงเวลาที่ถูกต้อง"); return; }
 
@@ -1371,16 +1423,31 @@ document.getElementById("modalSubmit").addEventListener("click", async () => {
   document.getElementById("modalSubmit").disabled = true;
 
   if (currentEditId) {
-    // Edit currently only supports single day (the original logic)
-    // or we can just update the first selected one.
-    // For simplicity in this complex request, we treat edit as single update.
-    const first = items[0];
-    if (first) {
-      await updateDoc(doc(db, "bookings", currentEditId), {
-        title, description: desc, room, start: first.start, end: first.end, phone,
-        status: "pending", editedAt: new Date()
+    const target = bookings.find(x => x.id === currentEditId);
+    const editedAt = new Date();
+    if (target?.groupId) {
+      const groupMembers = bookings.filter(x => x.groupId === target.groupId && x.status === "pending");
+      const sortedMembers = [...groupMembers].sort((a,b) => a.start - b.start);
+      const sortedItems   = [...items].sort((a,b) => a.start - b.start);
+      const updates = sortedMembers.map((m, i) => {
+        const timeItem = sortedItems[i];
+        return updateDoc(doc(db, "bookings", m.id), {
+          title, description: desc, phone, room,
+          ...(timeItem ? { start: timeItem.start, end: timeItem.end } : {}),
+          status: "pending", editedAt
+        });
       });
-      toast("แก้ไขการจองแล้ว — รอการอนุมัติใหม่อีกครั้ง");
+      await Promise.all(updates);
+      toast(`แก้ไขการจอง ${sortedMembers.length} วันแล้ว — รอการอนุมัติใหม่`);
+    } else {
+      const first = items[0];
+      if (first) {
+        await updateDoc(doc(db, "bookings", currentEditId), {
+          title, description: desc, room, start: first.start, end: first.end, phone,
+          status: "pending", editedAt
+        });
+        toast("แก้ไขการจองแล้ว — รอการอนุมัติใหม่อีกครั้ง");
+      }
     }
   } else {
     await addBooking(items);
@@ -1442,7 +1509,8 @@ function openDetailModal(b) {
   if (canEdit) {
     const editBtn = document.createElement("button");
     editBtn.className   = "btn-cancel";
-    editBtn.textContent = "✏️ แก้ไข";
+    const groupEditCount = b.groupId ? bookings.filter(x => x.groupId === b.groupId && x.status === "pending").length : 1;
+    editBtn.textContent = groupEditCount > 1 ? `✏️ แก้ไข (${groupEditCount} วัน)` : "✏️ แก้ไข";
     editBtn.onclick = () => {
       closeDetail();
       openBookingModal(b.room, b.start, b.id);
@@ -1466,7 +1534,13 @@ if (isCurrentlyActive(b)) {
   delBtn.style.cursor  = "not-allowed";
   delBtn.title = "การประชุมกำลังดำเนินอยู่";
 }
-delBtn.onclick = () => deleteBooking(b.id);
+delBtn.onclick = () => {
+  const label = isAdmin ? "ลบการจองนี้" : "ยกเลิกการจองนี้";
+  const groupCount = b.groupId ? bookings.filter(x => x.groupId === b.groupId && x.status === b.status).length : 1;
+  const groupMsg = groupCount > 1 ? `\n(จะดำเนินการทั้งหมด ${groupCount} วัน)` : "";
+  if (!confirm(`ยืนยัน${label}?\n"${b.title}"${groupMsg}`)) return;
+  deleteBooking(b.id);
+};
     footer.appendChild(delBtn);
   }
 
@@ -1535,6 +1609,11 @@ function endOfDay(d)   { const x = new Date(d); x.setHours(23,59,59,999); return
 function startOfWeek(d) { const x = new Date(d); x.setDate(x.getDate()-x.getDay()); x.setHours(0,0,0,0); return x; }
 function sameDay(a,b) { return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate(); }
 
+function fmtDate(d) {
+  if (!d) return "—";
+  const monthAbbr = ["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
+  return `${d.getDate()} ${monthAbbr[d.getMonth()]} ${d.getFullYear()+543}`;
+}
 function fmtTime(d) {
   return `${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")} น.`;
 }

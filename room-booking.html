@@ -1536,9 +1536,7 @@ if (isCurrentlyActive(b)) {
 }
 delBtn.onclick = () => {
   const label = isAdmin ? "ลบการจองนี้" : "ยกเลิกการจองนี้";
-  const groupCount = b.groupId ? bookings.filter(x => x.groupId === b.groupId && x.status === b.status).length : 1;
-  const groupMsg = groupCount > 1 ? `\n(จะดำเนินการทั้งหมด ${groupCount} วัน)` : "";
-  if (!confirm(`ยืนยัน${label}?\n"${b.title}"${groupMsg}`)) return;
+  if (!confirm(`ยืนยัน${label}?\n"${b.title}"\n${fmtDate(b.start)}`)) return;
   deleteBooking(b.id);
 };
     footer.appendChild(delBtn);

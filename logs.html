@@ -189,6 +189,39 @@
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+      .topbar { padding: 0 14px; gap: 10px; height: 56px; }
+      .topbar-title { display: none; }
+      .topbar-brand { font-size: 15px; }
+      .user-name { display: none; }
+      .content { padding: 16px 14px; }
+      .page-header h1 { font-size: 22px; }
+      .filters { gap: 8px; }
+      .filter-group { overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; }
+      .filter-btn { padding: 5px 10px; font-size: 12px; }
+      .search-input { min-width: 0; width: 100%; }
+      .filters-right { margin-left: 0; width: 100%; }
+      .room-filter-select { font-size: 13px; padding: 7px 10px; }
+
+      /* hide table, show cards */
+      .table-wrap table { display: none; }
+      .mobile-cards { display: block !important; }
+    }
+
+    /* mobile card layout */
+    .mobile-cards { display: none; }
+    .log-card {
+      background: var(--white); border: 1px solid var(--line);
+      border-radius: 10px; padding: 14px; margin-bottom: 10px;
+    }
+    .log-card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+    .log-card-title { font-size: 14px; font-weight: 700; color: var(--ink); }
+    .log-card-room { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .log-card-meta { font-size: 12px; color: var(--muted); line-height: 1.8; }
+    .log-card-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--line2); }
+    .log-card-time { font-size: 11px; color: var(--muted2); }
   </style>
 </head>
 <body>
@@ -255,6 +288,7 @@
       </thead>
       <tbody id="logsBody"></tbody>
     </table>
+    <div class="mobile-cards" id="mobileCards"></div>
     <div class="empty-state" id="emptyState" style="display:none">
       <div class="icon">📭</div>
       <p>ไม่พบรายการที่ตรงกับเงื่อนไข</p>
@@ -441,10 +475,10 @@ function renderTable() {
 
   empty.style.display = "none";
 
+  // ── desktop table ──
   tbody.innerHTML = paged.map(b => {
     const m          = ROOM_META[b.room] || { name: b.room, color: "#888" };
     const actionTime = b.deletedAt || b.rejectedAt || b.endedAt || b.createdAt;
-
     return `<tr>
       <td>
         <div class="title-cell">${esc(b.title || "—")}</div>
@@ -471,6 +505,39 @@ function renderTable() {
       </td>
     </tr>`;
   }).join("");
+
+  // ── mobile cards ──
+  const mobileCards = document.getElementById("mobileCards");
+  if (mobileCards) {
+    mobileCards.innerHTML = paged.map(b => {
+      const m = ROOM_META[b.room] || { name: b.room, color: "#888" };
+      const actionTime = b.deletedAt || b.rejectedAt || b.endedAt || b.createdAt;
+      return `
+      <div class="log-card">
+        <div class="log-card-header">
+          <div>
+            <div class="log-card-title">${esc(b.title || "—")}</div>
+            <div class="log-card-room">
+              <span style="width:7px;height:7px;border-radius:50%;background:${m.color};display:inline-block"></span>
+              ${m.name}
+            </div>
+          </div>
+          ${statusBadge(b)}
+        </div>
+        <div class="log-card-meta">
+          📅 ${fmtDate(b.start)} · ${fmtTime(b.start)} – ${fmtTime(b.end)}<br>
+          👤 ${esc(b.user || "—")}
+          ${b.court ? ` · 🏛 ${esc(b.court)}` : ""}
+          ${b.phone ? `<br>📞 ${esc(b.phone)}` : ""}
+          ${b.description ? `<br>📝 ${esc(b.description)}` : ""}
+        </div>
+        <div class="log-card-footer">
+          <span class="log-card-time">${actionTime ? fmtDateTime(actionTime) : "—"}</span>
+          ${b.rejectedReason ? `<span style="font-size:11px;color:var(--danger)">${esc(b.rejectedReason)}</span>` : ""}
+        </div>
+      </div>`;
+    }).join("");
+  }
 
   attachPagination(totalPages);
 }

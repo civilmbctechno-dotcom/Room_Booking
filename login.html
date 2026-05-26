@@ -260,27 +260,7 @@
   </div>
 
   <div class="rooms-preview" id="roomsPreview">
-    <!-- filled by JS -->
-    <div class="room-bar">
-      <div class="room-dot" style="background:var(--room-1)"></div>
-      <div class="room-bar-info"><div class="room-bar-name">ห้องประชุม 1</div><div class="room-bar-sub">ชั้น 5 · ห้องประชุมใหญ่ 29 ที่นั่ง</div></div>
-      <div class="room-bar-badge loading-badge" id="badge-1">กำลังโหลด...</div>
-    </div>
-    <div class="room-bar">
-      <div class="room-dot" style="background:var(--room-2)"></div>
-      <div class="room-bar-info"><div class="room-bar-name">ห้องประชุม 2</div><div class="room-bar-sub">ชั้น 5 · ห้องประชุมเล็ก 13 ที่นั่ง</div></div>
-      <div class="room-bar-badge loading-badge" id="badge-2">กำลังโหลด...</div>
-    </div>
-    <div class="room-bar">
-      <div class="room-dot" style="background:var(--room-3)"></div>
-      <div class="room-bar-info"><div class="room-bar-name">ห้องประชุม 3</div><div class="room-bar-sub">ชั้น 5 · ห้องประชุมเล็ก 13 ที่นั่ง</div></div>
-      <div class="room-bar-badge loading-badge" id="badge-3">กำลังโหลด...</div>
-    </div>
-    <div class="room-bar">
-      <div class="room-dot" style="background:var(--room-4)"></div>
-      <div class="room-bar-info"><div class="room-bar-name">ห้องสมัครสโมสร</div><div class="room-bar-sub">ชั้น 2 · ห้องจัดเลี้ยง</div></div>
-      <div class="room-bar-badge loading-badge" id="badge-4">กำลังโหลด...</div>
-    </div>
+    <!-- populated dynamically from Firestore -->
   </div>
 </div>
 
@@ -314,7 +294,7 @@
 
     <div class="form-group">
       <label>ชื่อผู้ใช้</label>
-      <input class="form-input" id="usernameInput" type="text" placeholder="เช่น civilmbc_user" autocomplete="username" />
+      <input class="form-input" id="usernameInput" type="text" autocomplete="username" />
     </div>
     <div class="form-group">
       <label>รหัสผ่าน</label>
@@ -332,7 +312,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import {
   getAuth, signInWithPopup, GoogleAuthProvider,
   onAuthStateChanged, setPersistence, browserLocalPersistence
@@ -484,61 +464,59 @@ document.getElementById("passwordInput").addEventListener("keydown", e => {
 });
 
 // ── LIVE ROOM STATUS ──────────────────────────────────────────
-const ROOMS = ["1","2","3","4"];
-
 async function loadRoomStatus() {
+  const preview = document.getElementById("roomsPreview");
   try {
-    const snap = await getDocs(collection(db, "bookings"));
-    const now  = Date.now();
+    // load rooms from Firestore
+    const roomsSnap = await getDocs(collection(db, "rooms"));
+    const rooms = [];
+    roomsSnap.forEach(d => {
+      if (d.data().status !== "suspended") rooms.push({ id: d.id, ...d.data() });
+    });
 
-    // build a map: roomId → { active, upcoming }
+    // load bookings
+    const bookSnap = await getDocs(collection(db, "bookings"));
+    const now = Date.now();
     const status = {};
-    ROOMS.forEach(r => { status[r] = { active: false, upcoming: false }; });
+    rooms.forEach(r => { status[r.id] = { active: false, upcoming: false }; });
 
-    snap.forEach(d => {
+    bookSnap.forEach(d => {
       const data = d.data();
-      if (!["approved"].includes(data.status)) return;
-      if (!ROOMS.includes(data.room)) return;
-
+      if (data.status !== "approved") return;
+      if (!status[data.room]) return;
       const start = data.start?.toDate ? data.start.toDate().getTime() : new Date(data.start).getTime();
       const end   = data.end?.toDate   ? data.end.toDate().getTime()   : new Date(data.end).getTime();
-
       if (now >= start && now < end) {
-        // currently in use
         status[data.room].active = true;
       } else if (start > now && start - now <= 60 * 60 * 1000) {
-        // starts within the next 60 minutes
         status[data.room].upcoming = true;
       }
     });
 
-    // update badges
-    ROOMS.forEach(r => {
-      const badge = document.getElementById("badge-" + r);
-      if (!badge) return;
-      if (status[r].active) {
-        badge.textContent = "🔴 กำลังใช้งาน";
-        badge.className   = "room-bar-badge busy";
-      } else if (status[r].upcoming) {
-        badge.textContent = "🟡 มีการจองเร็วๆ นี้";
-        badge.className   = "room-bar-badge soon";
-      } else {
-        badge.textContent = "🟢 ว่าง";
-        badge.className   = "room-bar-badge free";
-      }
-    });
+    // render room bars
+    preview.innerHTML = rooms.map(r => {
+      const color = r.color || "#888";
+      const sub   = `ชั้น ${r.floor}${r.capacity ? ` · ${r.note || ""} ${r.capacity} ที่นั่ง` : (r.note ? ` · ${r.note}` : "")}`;
+      const st    = status[r.id];
+      const badgeClass = st.active ? "busy" : st.upcoming ? "soon" : "free";
+      const badgeText  = st.active ? "🔴 กำลังใช้งาน" : st.upcoming ? "🟡 มีการจองเร็วๆ นี้" : "🟢 ว่าง";
+      return `
+        <div class="room-bar">
+          <div class="room-dot" style="background:${color}"></div>
+          <div class="room-bar-info">
+            <div class="room-bar-name">${r.name}</div>
+            <div class="room-bar-sub">${sub}</div>
+          </div>
+          <div class="room-bar-badge ${badgeClass}">${badgeText}</div>
+        </div>`;
+    }).join("");
 
   } catch(e) {
-    // if Firestore fails just show unknown
-    ROOMS.forEach(r => {
-      const badge = document.getElementById("badge-" + r);
-      if (badge) { badge.textContent = "—"; badge.className = "room-bar-badge loading-badge"; }
-    });
+    preview.innerHTML = `<div style="color:rgba(255,255,255,0.3);font-size:13px">ไม่สามารถโหลดข้อมูลห้องได้</div>`;
   }
 }
 
 loadRoomStatus();
-// refresh every 60 seconds so status stays live
 setInterval(loadRoomStatus, 60000);
 </script>
 </body>

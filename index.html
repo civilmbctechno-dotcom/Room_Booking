@@ -352,11 +352,142 @@
   cursor: pointer;
   pointer-events: all;
 }
+
+    /* ── USER DROPDOWN ── */
+    .user-menu-wrap { position: relative; }
+    .user-chip {
+      cursor: pointer; user-select: none;
+    }
+    .user-chip:hover { background: var(--line2); }
+    .user-dropdown {
+      position: absolute; top: calc(100% + 8px); right: 0;
+      background: var(--white); border: 1px solid var(--line);
+      border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+      min-width: 200px; overflow: hidden; z-index: 200;
+      opacity: 0; pointer-events: none;
+      transform: translateY(-6px);
+      transition: opacity 0.15s, transform 0.15s;
+    }
+    .user-dropdown.open { opacity: 1; pointer-events: all; transform: translateY(0); }
+    .dropdown-header {
+      padding: 12px 16px; border-bottom: 1px solid var(--line2);
+      font-size: 12px; color: var(--muted2);
+    }
+    .dropdown-header strong { display: block; font-size: 14px; color: var(--ink); font-weight: 600; margin-bottom: 2px; }
+    .dropdown-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 16px; font-size: 14px; color: var(--ink);
+      text-decoration: none; cursor: pointer; transition: background 0.1s;
+      border: none; background: none; width: 100%; font-family: 'Sarabun', sans-serif;
+      font-weight: 500;
+    }
+    .dropdown-item:hover { background: var(--surface); }
+    .dropdown-item.danger { color: var(--danger); }
+    .dropdown-item.danger:hover { background: var(--danger-bg); }
+    .dropdown-divider { height: 1px; background: var(--line2); margin: 4px 0; }
+
+    /* ── HAMBURGER ── */
+    .hamburger-btn {
+      display: none; width: 36px; height: 36px; border: 1.5px solid var(--line);
+      background: var(--white); border-radius: 8px; cursor: pointer;
+      flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+      flex-shrink: 0;
+    }
+    .hamburger-btn span {
+      display: block; width: 16px; height: 2px; background: var(--muted); border-radius: 2px;
+      transition: all 0.2s;
+    }
+
+    /* ── SIDEBAR OVERLAY (mobile) ── */
+    .sidebar-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+      z-index: 150; backdrop-filter: blur(2px);
+    }
+    .sidebar-overlay.open { display: block; }
+
+    /* ── MOBILE ROOM PICKER (day/week view on mobile) ── */
+    .mobile-room-bar {
+      display: none; padding: 8px 12px; background: var(--white);
+      border-bottom: 1px solid var(--line); gap: 8px; align-items: center;
+      overflow-x: auto; -webkit-overflow-scrolling: touch;
+    }
+    .mobile-room-pill {
+      flex-shrink: 0; padding: 5px 12px; border-radius: 20px;
+      font-size: 12px; font-weight: 600; cursor: pointer;
+      border: 2px solid transparent; transition: all 0.15s; white-space: nowrap;
+    }
+    .mobile-room-pill.active { border-color: currentColor; }
+    .mobile-room-pill.inactive { opacity: 0.4; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+      :root { --sidebar: 280px; --topbar: 56px; }
+
+      /* topbar */
+      .topbar { padding: 0 12px; gap: 8px; height: var(--topbar); }
+      .topbar-brand { font-size: 15px; }
+      .topbar-nav .view-btn { padding: 5px 8px; font-size: 13px; }
+      .date-label { font-size: 12px; min-width: 0; flex: 1; text-align: center; }
+      .today-btn { display: none; }
+      .hamburger-btn { display: flex; }
+      .user-name, .role-badge { display: none; }
+      .user-avatar { width: 30px; height: 30px; }
+
+      /* sidebar — slide in from left */
+      .sidebar {
+        position: fixed; left: -var(--sidebar); top: 0; height: 100vh;
+        z-index: 160; transform: translateX(-100%);
+        transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
+        box-shadow: none; width: var(--sidebar);
+      }
+      .sidebar.open {
+        transform: translateX(0);
+        box-shadow: 4px 0 24px rgba(0,0,0,0.15);
+      }
+
+      /* body wrap fills full width */
+      .body-wrap { overflow: hidden; }
+
+      /* mobile room picker bar */
+      .mobile-room-bar { display: flex; }
+
+      /* calendar */
+      .calendar-wrap { overflow-x: auto; }
+
+      /* topbar nav - smaller */
+      .topbar-nav { gap: 2px; }
+
+      /* modals full-screen on mobile */
+      .modal {
+        width: 100% !important; max-width: 100% !important;
+        border-radius: 20px 20px 0 0 !important;
+        position: fixed; bottom: 0; left: 0; right: 0;
+        max-height: 92vh;
+      }
+      .modal-backdrop { align-items: flex-end; }
+      .modal-backdrop .modal {
+        transform: translateY(40px) scale(1) !important;
+      }
+      .modal-backdrop.open .modal {
+        transform: translateY(0) scale(1) !important;
+      }
+
+      /* guest banner */
+      .guest-banner { font-size: 13px; padding: 7px 12px; }
+    }
+
+    @media (max-width: 480px) {
+      .topbar-brand { display: none; }
+      .nav-arrow-btn { width: 28px; height: 28px; font-size: 14px; }
+    }
   </style>
 </head>
 <body>
 
 <div class="topbar">
+  <button class="hamburger-btn" id="hamburgerBtn">
+    <span></span><span></span><span></span>
+  </button>
   <div class="topbar-brand">มีนบุรี <span>ห้องประชุม</span></div>
   <div class="topbar-nav">
     <button class="view-btn active" data-view="day">วัน</button>
@@ -368,21 +499,38 @@
   <button class="nav-arrow-btn" id="nextBtn">&#8250;</button>
   <button class="today-btn" id="todayBtn">วันนี้</button>
   <div class="topbar-spacer"></div>
-  <div class="user-chip" id="userChip" style="display:none">
-    <div class="user-avatar" id="userAvatar"></div>
-    <span class="user-name" id="userName"></span>
-    <span class="role-badge" id="roleBadge"></span>
+  <div class="user-menu-wrap" id="userMenuWrap" style="display:none">
+    <div class="user-chip" id="userChip">
+      <div class="user-avatar" id="userAvatar"></div>
+      <span class="user-name" id="userName"></span>
+      <span class="role-badge" id="roleBadge"></span>
+    </div>
+    <div class="user-dropdown" id="userDropdown">
+      <div class="dropdown-header">
+        <strong id="dropdownName">—</strong>
+        <span id="dropdownRole">—</span>
+      </div>
+      <div id="adminMenuItems" style="display:none">
+        <a href="logs.html"  class="dropdown-item">📋 ประวัติการจอง</a>
+        <a href="rooms.html" class="dropdown-item">🏢 จัดการห้องประชุม</a>
+        <a href="users.html" class="dropdown-item">👥 จัดการผู้ใช้งาน</a>
+        <div class="dropdown-divider"></div>
+      </div>
+      <button class="dropdown-item danger" id="logoutBtn">🚪 ออกจากระบบ</button>
+    </div>
   </div>
-  <a href="logs.html" id="logsBtn" style="display:none;padding:6px 13px;border:1.5px solid var(--line);background:var(--white);border-radius:8px;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:500;color:var(--muted);text-decoration:none;white-space:nowrap;">📋 ประวัติ</a>
-<button class="logout-btn" id="logoutBtn" style="display:none">ออกจากระบบ</button>
 </div>
 
 <div class="guest-banner" id="guestBanner" style="display:none">
   👁 คุณกำลังดูในฐานะผู้เยี่ยมชม — <a href="login.html">เข้าสู่ระบบ</a> เพื่อจองห้องประชุม
 </div>
 
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<div class="mobile-room-bar" id="mobileRoomBar"></div>
+
 <div class="body-wrap">
-  <div class="sidebar">
+  <div class="sidebar" id="sidebar">
     <div class="sidebar-section">
       <div class="sidebar-title">ห้องประชุม</div>
       <div id="roomFilters"></div>
@@ -408,8 +556,11 @@
         <input class="form-input" id="bookCourt" placeholder="ศาลแพ่งมีนบุรี" readonly style="background:var(--surface);color:var(--muted)" />
       </div>
       <div class="form-row">
-        <label class="form-label">เบอร์โทรติดต่อ</label>
-        <input class="form-input" id="bookPhone" type="tel" placeholder="0XX-XXX-XXXX" />
+        <label class="form-label">เบอร์โทรติดต่อ <span id="phoneRequiredMark" style="color:var(--danger)">*</span></label>
+        <div style="position:relative">
+          <input class="form-input" id="bookPhone" type="tel" placeholder="0XX-XXX-XXXX" />
+          <span id="phoneLockIcon" style="display:none;position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:13px;color:var(--muted2)" title="เบอร์โทรกำหนดโดยหน่วยงาน">🔒</span>
+        </div>
       </div>
       <div class="form-row">
         <label class="form-label">ชื่อการประชุม / กิจกรรม</label>
@@ -422,10 +573,7 @@
       <div class="form-row">
         <label class="form-label">ห้องที่ต้องการจอง</label>
         <select class="form-select" id="bookRoom">
-          <option value="1">ห้องประชุม 1 ชั้น 5 — ห้องประชุมใหญ่ 29 ที่นั่ง</option>
-          <option value="2">ห้องประชุม 2 ชั้น 5 — ห้องประชุมเล็ก 13 ที่นั่ง</option>
-          <option value="3">ห้องประชุม 3 ชั้น 5 — ห้องประชุมเล็ก 13 ที่นั่ง</option>
-          <option value="4">ห้องสมัครสโมสร ชั้น 2 — ห้องจัดเลี้ยง</option>
+          <!-- populated dynamically from Firestore -->
         </select>
       </div>
       <div class="form-row">
@@ -508,7 +656,7 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import {
-  getFirestore, collection, addDoc, getDocs, onSnapshot, updateDoc, deleteDoc, doc
+  getFirestore, collection, addDoc, getDocs, onSnapshot, updateDoc, deleteDoc, doc, query, orderBy
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
@@ -525,16 +673,53 @@ const app  = initializeApp(firebaseConfig);
 const db   = getFirestore(app);
 const auth = getAuth(app);
 
-const ROOMS = ["1","2","3","4"];
-const ROOM_META = {
-  "1": { name: "ห้องประชุม 1",    sub: "ชั้น 5 · ห้องประชุมใหญ่ 29 ที่นั่ง", color: "#e84040", bg: "rgba(232,64,64,0.12)"  },
-  "2": { name: "ห้องประชุม 2",    sub: "ชั้น 5 · ห้องประชุมเล็ก 13 ที่นั่ง", color: "#2a5cff", bg: "rgba(42,92,255,0.12)"  },
-  "3": { name: "ห้องประชุม 3",    sub: "ชั้น 5 · ห้องประชุมเล็ก 13 ที่นั่ง", color: "#18b06a", bg: "rgba(24,176,106,0.12)" },
-  "4": { name: "ห้องสมัครสโมสร", sub: "ชั้น 2 · ห้องจัดเลี้ยง",              color: "#9b59b6", bg: "rgba(155,89,182,0.12)" }
-};
+let ROOMS    = [];
+let ROOM_META = {};
+
+async function loadRooms() {
+  const snap = await getDocs(query(collection(db, "rooms"), orderBy("createdAt")));
+  ROOMS = [];
+  ROOM_META = {};
+  snap.forEach(d => {
+    const r = d.data();
+    if (r.status === "suspended") return;
+    const id = d.id;
+    ROOMS.push(id);
+    const hex = r.color || "#888";
+    const bigint = parseInt(hex.replace("#",""), 16);
+    const rr = (bigint >> 16) & 255, gg = (bigint >> 8) & 255, bb = bigint & 255;
+    ROOM_META[id] = {
+      name: r.name,
+      sub:  `ชั้น ${r.floor}${r.capacity ? ` · ${r.note || ""} ${r.capacity} ที่นั่ง` : (r.note ? ` · ${r.note}` : "")}`,
+      color: hex,
+      bg: `rgba(${rr},${gg},${bb},0.12)`
+    };
+  });
+  visibleRooms = new Set(ROOMS);
+
+  // populate booking form select
+  const sel = document.getElementById("bookRoom");
+  sel.innerHTML = ROOMS.map(id => {
+    const m = ROOM_META[id];
+    return `<option value="${id}">${m.name} — ${m.sub}</option>`;
+  }).join("");
+}
 
 const ADMIN_EMAILS = ["civilmbc.techno@gmail.com"];
 const DAY_NAMES    = ["อา","จ","อ","พ","พฤ","ศ","ส"];
+
+// ── COURT COLORS & PHONES ─────────────────────────────────────
+const COURT_META = {
+  "ศาลแพ่งมีนบุรี":    { color: "#2a5cff", bg: "rgba(42,92,255,0.12)",   phone: "021714150" },
+  "ศาลอาญามีนบุรี":    { color: "#e84040", bg: "rgba(232,64,64,0.12)",   phone: "021714086" },
+  "ศาลเยาวชนมีนบุรี":  { color: "#18b06a", bg: "rgba(24,176,106,0.12)", phone: "0657267633" },
+};
+const DEFAULT_COURT_COLOR = "#9b59b6";
+const DEFAULT_COURT_BG    = "rgba(155,89,182,0.12)";
+
+function getCourtStyle(court) {
+  return COURT_META[court] || { color: DEFAULT_COURT_COLOR, bg: DEFAULT_COURT_BG, phone: "" };
+}
 const MONTH_NAMES  = ["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน",
                       "กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
 
@@ -555,7 +740,7 @@ let isGuest       = false;
 let bookings      = [];
 let currentView   = "day";
 let currentDate   = new Date();
-let visibleRooms  = new Set(ROOMS);
+let visibleRooms  = new Set();
 let currentEditId = null;
 let selectedDates = new Set();
 let miniCalDate   = new Date();
@@ -579,11 +764,16 @@ function getUserPhone() {
 const urlParams = new URLSearchParams(window.location.search);
 isGuest = urlParams.get("guest") === "1";
 
+// Load rooms from Firestore first, then start auth
+await loadRooms();
+
 if (isGuest) {
   document.getElementById("guestBanner").style.display = "flex";
-  document.getElementById("userChip").style.display = "flex";
+  document.getElementById("userMenuWrap").style.display = "block";
   document.getElementById("userAvatar").textContent = "ผ";
   document.getElementById("userName").textContent   = "ผู้เยี่ยมชม";
+  document.getElementById("dropdownName").textContent = "ผู้เยี่ยมชม";
+  document.getElementById("dropdownRole").textContent = "Guest";
   const rb = document.getElementById("roleBadge");
   rb.textContent = "Guest"; rb.className = "role-badge guest";
   buildRoomFilters();
@@ -612,33 +802,60 @@ document.getElementById("logoutBtn").addEventListener("click", async () => {
   window.location.href = "login.html";
 });
 
+// ── DROPDOWN TOGGLE ───────────────────────────────────────────
+document.getElementById("userChip").addEventListener("click", (e) => {
+  e.stopPropagation();
+  document.getElementById("userDropdown").classList.toggle("open");
+});
+document.addEventListener("click", () => {
+  document.getElementById("userDropdown").classList.remove("open");
+});
+
+// ── SIDEBAR HAMBURGER ─────────────────────────────────────────
+function openSidebar() {
+  document.getElementById("sidebar").classList.add("open");
+  document.getElementById("sidebarOverlay").classList.add("open");
+}
+function closeSidebar() {
+  document.getElementById("sidebar").classList.remove("open");
+  document.getElementById("sidebarOverlay").classList.remove("open");
+}
+document.getElementById("hamburgerBtn").addEventListener("click", (e) => {
+  e.stopPropagation();
+  const isOpen = document.getElementById("sidebar").classList.contains("open");
+  isOpen ? closeSidebar() : openSidebar();
+});
+document.getElementById("sidebarOverlay").addEventListener("click", closeSidebar);
+
 function initLocalUI(u) {
-  document.getElementById("userChip").style.display = "flex";
-  document.getElementById("userAvatar").textContent = u.displayName[0].toUpperCase();
-  document.getElementById("userName").textContent   = u.displayName;
+  document.getElementById("userMenuWrap").style.display = "block";
+  document.getElementById("userAvatar").textContent  = u.displayName[0].toUpperCase();
+  document.getElementById("userName").textContent    = u.displayName;
+  document.getElementById("dropdownName").textContent = u.displayName;
+  document.getElementById("dropdownRole").textContent = isAdmin ? "ผู้ดูแลระบบ" : "ผู้ใช้งาน";
   const rb = document.getElementById("roleBadge");
   rb.textContent = isAdmin ? "ผู้ดูแล" : "ผู้ใช้งาน";
   rb.className   = "role-badge " + (isAdmin ? "admin" : "user");
-  document.getElementById("logoutBtn").style.display = "block";
   if (isAdmin) {
-    document.getElementById("pendingPanel").style.display = "block";
-    document.getElementById("logsBtn").style.display = "block";
+    document.getElementById("pendingPanel").style.display  = "block";
+    document.getElementById("adminMenuItems").style.display = "block";
   }
   buildRoomFilters();
   loadBookings();
 }
 
 function initFirebaseUI(user) {
-  document.getElementById("userChip").style.display = "flex";
-  document.getElementById("userAvatar").textContent = user.email[0].toUpperCase();
-  document.getElementById("userName").textContent   = user.email.split("@")[0];
+  document.getElementById("userMenuWrap").style.display = "block";
+  document.getElementById("userAvatar").textContent  = user.email[0].toUpperCase();
+  document.getElementById("userName").textContent    = user.email.split("@")[0];
+  document.getElementById("dropdownName").textContent = user.email.split("@")[0];
+  document.getElementById("dropdownRole").textContent = isAdmin ? "ผู้ดูแลระบบ" : "ผู้ใช้งาน";
   const rb = document.getElementById("roleBadge");
   rb.textContent = isAdmin ? "ผู้ดูแล" : "ผู้ใช้งาน";
   rb.className   = "role-badge " + (isAdmin ? "admin" : "user");
-  document.getElementById("logoutBtn").style.display = "block";
   if (isAdmin) {
-    document.getElementById("pendingPanel").style.display = "block";
-    document.getElementById("logsBtn").style.display = "block";
+    document.getElementById("pendingPanel").style.display  = "block";
+    document.getElementById("adminMenuItems").style.display = "block";
   }
   buildRoomFilters();
   loadBookings();
@@ -739,8 +956,7 @@ async function approveBooking(id) {
     toast(`อนุมัติการจองทั้งหมด ${approvedCount} รายการเรียบร้อยแล้ว ✓`);
   }
 
-   await loadBookings();
-  toast(`ปฏิเสธคำขอจองทั้งหมด ${toReject.length} รายการแล้ว`);
+  await loadBookings();
 }
 
 async function rejectBooking(id) {
@@ -801,9 +1017,13 @@ function hasConflict(room, start, end, excludeId = null) {
 // ── ROOM FILTERS ─────────────────────────────────────────────
 function buildRoomFilters() {
   const wrap = document.getElementById("roomFilters");
+  const mobileBar = document.getElementById("mobileRoomBar");
   wrap.innerHTML = "";
+  mobileBar.innerHTML = "";
+
   ROOMS.forEach(r => {
     const m  = ROOM_META[r];
+    // sidebar item
     const el = document.createElement("div");
     el.className = "room-filter"; el.dataset.room = r;
     el.innerHTML = `
@@ -812,7 +1032,6 @@ function buildRoomFilters() {
         <div class="room-filter-name">${m.name}</div>
         <div class="room-filter-sub">${m.sub}</div>
       </div>
-      <span class="room-filter-count" id="count-${r}">0</span>
     `;
     el.addEventListener("click", () => {
       if (visibleRooms.has(r)) {
@@ -822,21 +1041,45 @@ function buildRoomFilters() {
         visibleRooms.add(r); el.classList.remove("off");
       }
       renderCalendar();
+      renderMobileRoomPills();
     });
     wrap.appendChild(el);
+
+    // mobile pill
+    const pill = document.createElement("div");
+    pill.className = "mobile-room-pill active";
+    pill.dataset.room = r;
+    pill.style.background = m.color + "22";
+    pill.style.color = m.color;
+    pill.textContent = m.name;
+    pill.addEventListener("click", () => {
+      if (visibleRooms.has(r)) {
+        if (visibleRooms.size === 1) return;
+        visibleRooms.delete(r);
+      } else {
+        visibleRooms.add(r);
+      }
+      renderMobileRoomPills();
+      // also sync sidebar
+      wrap.querySelectorAll(".room-filter").forEach(el => {
+        el.classList.toggle("off", !visibleRooms.has(el.dataset.room));
+      });
+      renderCalendar();
+    });
+    mobileBar.appendChild(pill);
+  });
+}
+
+function renderMobileRoomPills() {
+  document.querySelectorAll(".mobile-room-pill").forEach(pill => {
+    const active = visibleRooms.has(pill.dataset.room);
+    pill.classList.toggle("active", active);
+    pill.classList.toggle("inactive", !active);
   });
 }
 
 function updateRoomCounts() {
-  const today = new Date();
-  ROOMS.forEach(r => {
-    const el = document.getElementById("count-" + r);
-    if (!el) return;
-    el.textContent = bookings.filter(b =>
-      b.room === r && b.status === "approved" &&
-      b.start >= startOfDay(today) && b.start < endOfDay(today)
-    ).length;
-  });
+  // counts removed — not useful when navigating between days
 }
 
 // ── PENDING PANEL ─────────────────────────────────────────────
@@ -860,16 +1103,31 @@ function renderPending() {
   Object.values(groups).forEach(items => {
     const b = items[0];
     const isGroup = items.length > 1;
+    const sorted = [...items].sort((a, z) => a.start - z.start);
+    const cs = getCourtStyle(b.court);
+
+    const daysHTML = sorted.map(item => `
+      <div style="display:flex;align-items:baseline;gap:6px;padding:4px 8px;border-bottom:1px solid var(--line)">
+        <span style="font-size:11px;color:var(--ink);font-weight:500;min-width:88px;flex-shrink:0">${fmtDate(item.start)}</span>
+        <span style="font-size:11px;color:var(--muted2)">${fmtTime(item.start)} – ${fmtTime(item.end)}</span>
+      </div>`).join("");
+
     const el = document.createElement("div");
     el.className = "pending-item";
+    el.style.borderLeft = `3px solid ${cs.color}`;
     el.innerHTML = `
-      <div class="pending-item-title">${esc(b.title)} ${isGroup ? `<span style="color:var(--accent)">[${items.length} วัน]</span>` : ""}</div>
-            <div class="pending-item-meta">
-        ${ROOM_META[b.room]?.name || b.room}<br>
-        ${isGroup ? `${fmtDT(b.start).split(" (")[0]} ... ${fmtDT(items[items.length-1].start).split(" (")[0]}` : fmtDTRange(b.start, b.end)}<br>
-        <span style="color:var(--muted2)">${esc(b.user)}</span>
-        ${b.court ? `<br><span style="color:var(--muted2)">🏛 ${esc(b.court)}</span>` : ""}
-        ${b.phone ? `<br><span style="color:var(--muted2)">📞 ${esc(b.phone)}</span>` : ""}
+      <div class="pending-item-title">
+        ${esc(b.title)}
+        ${isGroup ? `<span style="color:${cs.color};font-size:11px;font-weight:700;margin-left:4px">[${items.length} วัน]</span>` : ""}
+      </div>
+      <div style="font-size:12px;font-weight:600;color:var(--muted2);margin:4px 0 5px">${ROOM_META[b.room]?.name || b.room}</div>
+      <div style="margin-bottom:7px;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--surface)">
+        ${daysHTML}
+      </div>
+      <div class="pending-item-meta" style="margin-bottom:6px">
+        <span>👤 ${esc(b.user)}</span>
+        ${b.court ? `<br><span>🏛 ${esc(b.court)}</span>` : ""}
+        ${b.phone ? `<br><span>📞 ${esc(b.phone)}</span>` : ""}
       </div>
       <div class="pending-actions">
         <button class="btn-approve">✓ อนุมัติ${isGroup ? "ทั้งหมด" : ""}</button>
@@ -917,14 +1175,20 @@ function renderDayView() {
       const topPx    = ((b.start - dayStart) / 3600000 - HOUR_START) * HOUR_H;
       const heightPx = Math.max(((b.end - b.start) / 3600000) * HOUR_H, 22);
       const isCompleted = b.status === "completed";
-const isPending   = b.status === "pending";
-html += `<div class="booking-block ${isPending ? "pending" : ""} ${isCompleted ? "completed-block" : ""}"
+      const isPending   = b.status === "pending";
+      const cs = getCourtStyle(b.court);
+      const blockColor = cs.color;
+      const textColor  = isPending ? blockColor : "#fff";
+      const subColor   = isPending ? blockColor : "rgba(255,255,255,0.85)";
+      const statusLabel = getStatusLabel(b);
+      html += `<div class="booking-block ${isPending ? "pending" : ""} ${isCompleted ? "completed-block" : ""}"
   style="top:${topPx}px;height:${heightPx}px;
-         background:${isPending ? "transparent" : m.color};
-         border-color:${m.color}" data-id="${b.id}">
-  <div class="booking-block-title" style="color:${isPending ? m.color : "#fff"}">${esc(b.title)}</div>
-  <div class="booking-block-time" style="color:${isPending ? m.color : "rgba(255,255,255,0.8)"}">${fmtTime(b.start)} – ${fmtTime(b.end)}</div>
-  ${isCompleted ? `<div style="font-size:9px;color:rgba(255,255,255,0.8);margin-top:2px">✓ เสร็จสิ้น</div>` : ""}
+         background:${isPending ? "transparent" : blockColor};
+         border-color:${blockColor}" data-id="${b.id}">
+  ${b.court ? `<div style="font-size:9px;font-weight:700;color:${subColor};opacity:0.9;margin-bottom:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(b.court)}</div>` : ""}
+  <div class="booking-block-title" style="color:${textColor}">${esc(b.title)}</div>
+  <div class="booking-block-time" style="color:${subColor}">${fmtTime(b.start)} – ${fmtTime(b.end)}</div>
+  ${heightPx > 50 ? `<div style="font-size:9px;color:${subColor};margin-top:2px">${statusLabel}</div>` : ""}
 </div>`;
     });
     html += `</div>`;
@@ -997,14 +1261,19 @@ function renderWeekView() {
           const topPx    = ((b.start - dayStart) / 3600000 - HOUR_START) * HOUR_H;
           const heightPx = Math.max(((b.end - b.start) / 3600000) * HOUR_H, 18);
           const isPending   = b.status === "pending";
-const isCompleted = b.status === "completed";
-html += `<div class="booking-block ${isPending ? "pending" : ""} ${isCompleted ? "completed-block" : ""}"
+          const isCompleted = b.status === "completed";
+          const cs = getCourtStyle(b.court);
+          const blockColor = cs.color;
+          const textColor  = isPending ? blockColor : "#fff";
+          const subColor   = isPending ? blockColor : "rgba(255,255,255,0.85)";
+          html += `<div class="booking-block ${isPending ? "pending" : ""} ${isCompleted ? "completed-block" : ""}"
   style="top:${topPx}px;height:${heightPx}px;
-         background:${isPending ? "transparent" : m.color};
-         border-color:${m.color}"
+         background:${isPending ? "transparent" : blockColor};
+         border-color:${blockColor}"
   data-id="${b.id}">
-  <div class="booking-block-title" style="color:${isPending ? m.color : "#fff"};font-size:10px">${esc(b.title)}</div>
-  ${isCompleted ? `<div style="font-size:9px;color:rgba(255,255,255,0.8)">✓ เสร็จสิ้น</div>` : ""}
+  ${b.court && heightPx > 30 ? `<div style="font-size:8px;font-weight:700;color:${subColor};opacity:0.9;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(b.court)}</div>` : ""}
+  <div class="booking-block-title" style="color:${textColor};font-size:10px">${esc(b.title)}</div>
+  ${heightPx > 40 ? `<div style="font-size:9px;color:${subColor}">${fmtTime(b.start)} – ${fmtTime(b.end)}</div>` : ""}
 </div>`;
         });
       html += `</div>`;
@@ -1032,9 +1301,9 @@ function renderMonthView() {
     html += `<div class="month-cell ${otherMonth?"other-month":""} ${isToday?"today":""}" data-date="${d.toISOString()}">`;
     html += `<div class="month-date-num">${d.getDate()}</div>`;
     dayBookings.slice(0,3).forEach(b => {
-      const m = ROOM_META[b.room];
-      html += `<div class="month-event-pill ${b.status}" style="background:${m.bg};color:${m.color}" data-id="${b.id}">
-        <span style="width:5px;height:5px;border-radius:50%;background:${m.color};display:inline-block;flex-shrink:0"></span>
+      const cs = getCourtStyle(b.court);
+      html += `<div class="month-event-pill ${b.status}" style="background:${cs.bg};color:${cs.color}" data-id="${b.id}">
+        <span style="width:5px;height:5px;border-radius:50%;background:${cs.color};display:inline-block;flex-shrink:0"></span>
         ${esc(b.title)}
       </div>`;
     });
@@ -1046,22 +1315,31 @@ function renderMonthView() {
 }
 
 function attachCalEvents(wrap) {
+  const todayStart = startOfDay(new Date());
+
+  function slotForHour(hour) {
+    if (hour >= 7 && hour < 12) return "morning";
+    return "afternoon";
+  }
+
   // day-view columns (have data-room)
   wrap.querySelectorAll(".hour-row[data-room]").forEach(el => {
     el.addEventListener("click", () => {
       if (isGuest) return;
       const start = new Date(currentDate);
       start.setHours(parseInt(el.dataset.hour), 0, 0, 0);
-      openBookingModal(el.dataset.room, start);
+      if (startOfDay(start) < todayStart) return; // block past
+      openBookingModal(el.dataset.room, start, null, slotForHour(parseInt(el.dataset.hour)));
     });
   });
-  // week-view columns (have data-date, no data-room)
+  // week-view columns (have data-date AND data-room)
   wrap.querySelectorAll(".hour-row[data-date]").forEach(el => {
     el.addEventListener("click", () => {
       if (isGuest) return;
       const start = new Date(el.dataset.date);
       start.setHours(parseInt(el.dataset.hour), 0, 0, 0);
-      openBookingModal(ROOMS[0], start);
+      if (startOfDay(start) < todayStart) return; // block past
+      openBookingModal(el.dataset.room, start, null, slotForHour(parseInt(el.dataset.hour)));
     });
   });
   wrap.querySelectorAll(".booking-block").forEach(el => {
@@ -1075,6 +1353,7 @@ function attachCalEvents(wrap) {
     el.addEventListener("click", () => {
       if (isGuest) return;
       const d = new Date(el.dataset.date); d.setHours(9,0,0,0);
+      if (startOfDay(d) < todayStart) return; // block past
       openBookingModal(ROOMS[0], d);
     });
   });
@@ -1240,15 +1519,24 @@ function selectSlot(key) {
 }
 
 // ── BOOKING MODAL ─────────────────────────────────────────────
-function openBookingModal(room, start, editId = null) {
+function openBookingModal(room, start, editId = null, slotKey = "morning") {
   // 1. Populate dropdowns FIRST (must exist before setting .value)
   populateTimeSelects();
 
   // 2. Set field values
   currentEditId = editId;
   document.getElementById("bookRoom").value  = room;
-  document.getElementById("bookCourt").value = getUserCourt();
-  document.getElementById("bookPhone").value = getUserPhone();
+  const court = getUserCourt();
+  document.getElementById("bookCourt").value = court;
+
+  // Phone: default from court if available, but always editable
+  const courtData = COURT_META[court];
+  const phoneInput = document.getElementById("bookPhone");
+  phoneInput.readOnly = false;
+  phoneInput.style.background = "";
+  phoneInput.style.color      = "";
+  document.getElementById("phoneLockIcon").style.display = "none";
+  phoneInput.value = courtData?.phone || getUserPhone() || "";
   document.getElementById("conflictWarn").classList.remove("show");
   document.getElementById("modalSubmit").disabled = false;
   document.querySelectorAll(".slot-btn").forEach(b => b.classList.remove("active"));
@@ -1261,7 +1549,7 @@ function openBookingModal(room, start, editId = null) {
     if (b) {
       document.getElementById("bookTitle").value = b.title;
       document.getElementById("bookDesc").value  = b.description || "";
-      document.getElementById("bookPhone").value = b.phone || "";
+      phoneInput.value = b.phone || courtData?.phone || "";
       selectedDates.add(toLocalDateValue(b.start));
       
       const startVal = `${String(b.start.getHours()).padStart(2,"0")}:${String(b.start.getMinutes()).padStart(2,"0")}`;
@@ -1277,7 +1565,7 @@ function openBookingModal(room, start, editId = null) {
     document.getElementById("bookTitle").value = "";
     document.getElementById("bookDesc").value  = "";
     selectedDates.add(toLocalDateValue(start));
-    selectSlot("morning");
+    selectSlot(slotKey);
   }
   
   renderMiniCal();
@@ -1343,6 +1631,7 @@ document.getElementById("modalSubmit").addEventListener("click", async () => {
   const endVal = document.getElementById("bookEnd").value;
 
   if (!title) { document.getElementById("bookTitle").focus(); return; }
+  if (!phone) { toast("กรุณากรอกเบอร์โทรติดต่อ"); document.getElementById("bookPhone").focus(); return; }
   if (selectedDates.size === 0) { toast("กรุณาเลือกอย่างน้อย 1 วัน"); return; }
   if (!startVal || !endVal || startVal >= endVal) { toast("กรุณาเลือกช่วงเวลาที่ถูกต้อง"); return; }
 
@@ -1371,16 +1660,31 @@ document.getElementById("modalSubmit").addEventListener("click", async () => {
   document.getElementById("modalSubmit").disabled = true;
 
   if (currentEditId) {
-    // Edit currently only supports single day (the original logic)
-    // or we can just update the first selected one.
-    // For simplicity in this complex request, we treat edit as single update.
-    const first = items[0];
-    if (first) {
-      await updateDoc(doc(db, "bookings", currentEditId), {
-        title, description: desc, room, start: first.start, end: first.end, phone,
-        status: "pending", editedAt: new Date()
+    const target = bookings.find(x => x.id === currentEditId);
+    const editedAt = new Date();
+    if (target?.groupId) {
+      const groupMembers = bookings.filter(x => x.groupId === target.groupId && x.status === "pending");
+      const sortedMembers = [...groupMembers].sort((a,b) => a.start - b.start);
+      const sortedItems   = [...items].sort((a,b) => a.start - b.start);
+      const updates = sortedMembers.map((m, i) => {
+        const timeItem = sortedItems[i];
+        return updateDoc(doc(db, "bookings", m.id), {
+          title, description: desc, phone, room,
+          ...(timeItem ? { start: timeItem.start, end: timeItem.end } : {}),
+          status: "pending", editedAt
+        });
       });
-      toast("แก้ไขการจองแล้ว — รอการอนุมัติใหม่อีกครั้ง");
+      await Promise.all(updates);
+      toast(`แก้ไขการจอง ${sortedMembers.length} วันแล้ว — รอการอนุมัติใหม่`);
+    } else {
+      const first = items[0];
+      if (first) {
+        await updateDoc(doc(db, "bookings", currentEditId), {
+          title, description: desc, room, start: first.start, end: first.end, phone,
+          status: "pending", editedAt
+        });
+        toast("แก้ไขการจองแล้ว — รอการอนุมัติใหม่อีกครั้ง");
+      }
     }
   } else {
     await addBooking(items);
@@ -1442,7 +1746,8 @@ function openDetailModal(b) {
   if (canEdit) {
     const editBtn = document.createElement("button");
     editBtn.className   = "btn-cancel";
-    editBtn.textContent = "✏️ แก้ไข";
+    const groupEditCount = b.groupId ? bookings.filter(x => x.groupId === b.groupId && x.status === "pending").length : 1;
+    editBtn.textContent = groupEditCount > 1 ? `✏️ แก้ไข (${groupEditCount} วัน)` : "✏️ แก้ไข";
     editBtn.onclick = () => {
       closeDetail();
       openBookingModal(b.room, b.start, b.id);
@@ -1466,7 +1771,11 @@ if (isCurrentlyActive(b)) {
   delBtn.style.cursor  = "not-allowed";
   delBtn.title = "การประชุมกำลังดำเนินอยู่";
 }
-delBtn.onclick = () => deleteBooking(b.id);
+delBtn.onclick = () => {
+  const label = isAdmin ? "ลบการจองนี้" : "ยกเลิกการจองนี้";
+  if (!confirm(`ยืนยัน${label}?\n"${b.title}"\n${fmtDate(b.start)}`)) return;
+  deleteBooking(b.id);
+};
     footer.appendChild(delBtn);
   }
 
@@ -1491,6 +1800,7 @@ document.querySelectorAll(".view-btn[data-view]").forEach(btn => {
     currentView = btn.dataset.view;
     document.querySelectorAll(".view-btn[data-view]").forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
+    closeSidebar();
     renderCalendar();
   });
 });
@@ -1535,6 +1845,11 @@ function endOfDay(d)   { const x = new Date(d); x.setHours(23,59,59,999); return
 function startOfWeek(d) { const x = new Date(d); x.setDate(x.getDate()-x.getDay()); x.setHours(0,0,0,0); return x; }
 function sameDay(a,b) { return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate(); }
 
+function fmtDate(d) {
+  if (!d) return "—";
+  const monthAbbr = ["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
+  return `${d.getDate()} ${monthAbbr[d.getMonth()]} ${d.getFullYear()+543}`;
+}
 function fmtTime(d) {
   return `${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")} น.`;
 }

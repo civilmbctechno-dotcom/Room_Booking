@@ -352,11 +352,142 @@
   cursor: pointer;
   pointer-events: all;
 }
+
+    /* ── USER DROPDOWN ── */
+    .user-menu-wrap { position: relative; }
+    .user-chip {
+      cursor: pointer; user-select: none;
+    }
+    .user-chip:hover { background: var(--line2); }
+    .user-dropdown {
+      position: absolute; top: calc(100% + 8px); right: 0;
+      background: var(--white); border: 1px solid var(--line);
+      border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+      min-width: 200px; overflow: hidden; z-index: 200;
+      opacity: 0; pointer-events: none;
+      transform: translateY(-6px);
+      transition: opacity 0.15s, transform 0.15s;
+    }
+    .user-dropdown.open { opacity: 1; pointer-events: all; transform: translateY(0); }
+    .dropdown-header {
+      padding: 12px 16px; border-bottom: 1px solid var(--line2);
+      font-size: 12px; color: var(--muted2);
+    }
+    .dropdown-header strong { display: block; font-size: 14px; color: var(--ink); font-weight: 600; margin-bottom: 2px; }
+    .dropdown-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 16px; font-size: 14px; color: var(--ink);
+      text-decoration: none; cursor: pointer; transition: background 0.1s;
+      border: none; background: none; width: 100%; font-family: 'Sarabun', sans-serif;
+      font-weight: 500;
+    }
+    .dropdown-item:hover { background: var(--surface); }
+    .dropdown-item.danger { color: var(--danger); }
+    .dropdown-item.danger:hover { background: var(--danger-bg); }
+    .dropdown-divider { height: 1px; background: var(--line2); margin: 4px 0; }
+
+    /* ── HAMBURGER ── */
+    .hamburger-btn {
+      display: none; width: 36px; height: 36px; border: 1.5px solid var(--line);
+      background: var(--white); border-radius: 8px; cursor: pointer;
+      flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+      flex-shrink: 0;
+    }
+    .hamburger-btn span {
+      display: block; width: 16px; height: 2px; background: var(--muted); border-radius: 2px;
+      transition: all 0.2s;
+    }
+
+    /* ── SIDEBAR OVERLAY (mobile) ── */
+    .sidebar-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+      z-index: 150; backdrop-filter: blur(2px);
+    }
+    .sidebar-overlay.open { display: block; }
+
+    /* ── MOBILE ROOM PICKER (day/week view on mobile) ── */
+    .mobile-room-bar {
+      display: none; padding: 8px 12px; background: var(--white);
+      border-bottom: 1px solid var(--line); gap: 8px; align-items: center;
+      overflow-x: auto; -webkit-overflow-scrolling: touch;
+    }
+    .mobile-room-pill {
+      flex-shrink: 0; padding: 5px 12px; border-radius: 20px;
+      font-size: 12px; font-weight: 600; cursor: pointer;
+      border: 2px solid transparent; transition: all 0.15s; white-space: nowrap;
+    }
+    .mobile-room-pill.active { border-color: currentColor; }
+    .mobile-room-pill.inactive { opacity: 0.4; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+      :root { --sidebar: 280px; --topbar: 56px; }
+
+      /* topbar */
+      .topbar { padding: 0 12px; gap: 8px; height: var(--topbar); }
+      .topbar-brand { font-size: 15px; }
+      .topbar-nav .view-btn { padding: 5px 8px; font-size: 13px; }
+      .date-label { font-size: 12px; min-width: 0; flex: 1; text-align: center; }
+      .today-btn { display: none; }
+      .hamburger-btn { display: flex; }
+      .user-name, .role-badge { display: none; }
+      .user-avatar { width: 30px; height: 30px; }
+
+      /* sidebar — slide in from left */
+      .sidebar {
+        position: fixed; left: -var(--sidebar); top: 0; height: 100vh;
+        z-index: 160; transform: translateX(-100%);
+        transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
+        box-shadow: none; width: var(--sidebar);
+      }
+      .sidebar.open {
+        transform: translateX(0);
+        box-shadow: 4px 0 24px rgba(0,0,0,0.15);
+      }
+
+      /* body wrap fills full width */
+      .body-wrap { overflow: hidden; }
+
+      /* mobile room picker bar */
+      .mobile-room-bar { display: flex; }
+
+      /* calendar */
+      .calendar-wrap { overflow-x: auto; }
+
+      /* topbar nav - smaller */
+      .topbar-nav { gap: 2px; }
+
+      /* modals full-screen on mobile */
+      .modal {
+        width: 100% !important; max-width: 100% !important;
+        border-radius: 20px 20px 0 0 !important;
+        position: fixed; bottom: 0; left: 0; right: 0;
+        max-height: 92vh;
+      }
+      .modal-backdrop { align-items: flex-end; }
+      .modal-backdrop .modal {
+        transform: translateY(40px) scale(1) !important;
+      }
+      .modal-backdrop.open .modal {
+        transform: translateY(0) scale(1) !important;
+      }
+
+      /* guest banner */
+      .guest-banner { font-size: 13px; padding: 7px 12px; }
+    }
+
+    @media (max-width: 480px) {
+      .topbar-brand { display: none; }
+      .nav-arrow-btn { width: 28px; height: 28px; font-size: 14px; }
+    }
   </style>
 </head>
 <body>
 
 <div class="topbar">
+  <button class="hamburger-btn" id="hamburgerBtn">
+    <span></span><span></span><span></span>
+  </button>
   <div class="topbar-brand">มีนบุรี <span>ห้องประชุม</span></div>
   <div class="topbar-nav">
     <button class="view-btn active" data-view="day">วัน</button>
@@ -368,21 +499,38 @@
   <button class="nav-arrow-btn" id="nextBtn">&#8250;</button>
   <button class="today-btn" id="todayBtn">วันนี้</button>
   <div class="topbar-spacer"></div>
-  <div class="user-chip" id="userChip" style="display:none">
-    <div class="user-avatar" id="userAvatar"></div>
-    <span class="user-name" id="userName"></span>
-    <span class="role-badge" id="roleBadge"></span>
+  <div class="user-menu-wrap" id="userMenuWrap" style="display:none">
+    <div class="user-chip" id="userChip">
+      <div class="user-avatar" id="userAvatar"></div>
+      <span class="user-name" id="userName"></span>
+      <span class="role-badge" id="roleBadge"></span>
+    </div>
+    <div class="user-dropdown" id="userDropdown">
+      <div class="dropdown-header">
+        <strong id="dropdownName">—</strong>
+        <span id="dropdownRole">—</span>
+      </div>
+      <div id="adminMenuItems" style="display:none">
+        <a href="logs.html"  class="dropdown-item">📋 ประวัติการจอง</a>
+        <a href="rooms.html" class="dropdown-item">🏢 จัดการห้องประชุม</a>
+        <a href="users.html" class="dropdown-item">👥 จัดการผู้ใช้งาน</a>
+        <div class="dropdown-divider"></div>
+      </div>
+      <button class="dropdown-item danger" id="logoutBtn">🚪 ออกจากระบบ</button>
+    </div>
   </div>
-  <a href="logs.html" id="logsBtn" style="display:none;padding:6px 13px;border:1.5px solid var(--line);background:var(--white);border-radius:8px;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:500;color:var(--muted);text-decoration:none;white-space:nowrap;">📋 ประวัติ</a>
-<button class="logout-btn" id="logoutBtn" style="display:none">ออกจากระบบ</button>
 </div>
 
 <div class="guest-banner" id="guestBanner" style="display:none">
   👁 คุณกำลังดูในฐานะผู้เยี่ยมชม — <a href="login.html">เข้าสู่ระบบ</a> เพื่อจองห้องประชุม
 </div>
 
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<div class="mobile-room-bar" id="mobileRoomBar"></div>
+
 <div class="body-wrap">
-  <div class="sidebar">
+  <div class="sidebar" id="sidebar">
     <div class="sidebar-section">
       <div class="sidebar-title">ห้องประชุม</div>
       <div id="roomFilters"></div>
@@ -425,10 +573,7 @@
       <div class="form-row">
         <label class="form-label">ห้องที่ต้องการจอง</label>
         <select class="form-select" id="bookRoom">
-          <option value="1">ห้องประชุม 1 ชั้น 5 — ห้องประชุมใหญ่ 29 ที่นั่ง</option>
-          <option value="2">ห้องประชุม 2 ชั้น 5 — ห้องประชุมเล็ก 13 ที่นั่ง</option>
-          <option value="3">ห้องประชุม 3 ชั้น 5 — ห้องประชุมเล็ก 13 ที่นั่ง</option>
-          <option value="4">ห้องสมัครสโมสร ชั้น 2 — ห้องจัดเลี้ยง</option>
+          <!-- populated dynamically from Firestore -->
         </select>
       </div>
       <div class="form-row">
@@ -511,7 +656,7 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import {
-  getFirestore, collection, addDoc, getDocs, onSnapshot, updateDoc, deleteDoc, doc
+  getFirestore, collection, addDoc, getDocs, onSnapshot, updateDoc, deleteDoc, doc, query, orderBy
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
@@ -528,13 +673,37 @@ const app  = initializeApp(firebaseConfig);
 const db   = getFirestore(app);
 const auth = getAuth(app);
 
-const ROOMS = ["1","2","3","4"];
-const ROOM_META = {
-  "1": { name: "ห้องประชุม 1",    sub: "ชั้น 5 · ห้องประชุมใหญ่ 29 ที่นั่ง", color: "#e84040", bg: "rgba(232,64,64,0.12)"  },
-  "2": { name: "ห้องประชุม 2",    sub: "ชั้น 5 · ห้องประชุมเล็ก 13 ที่นั่ง", color: "#2a5cff", bg: "rgba(42,92,255,0.12)"  },
-  "3": { name: "ห้องประชุม 3",    sub: "ชั้น 5 · ห้องประชุมเล็ก 13 ที่นั่ง", color: "#18b06a", bg: "rgba(24,176,106,0.12)" },
-  "4": { name: "ห้องสมัครสโมสร", sub: "ชั้น 2 · ห้องจัดเลี้ยง",              color: "#9b59b6", bg: "rgba(155,89,182,0.12)" }
-};
+let ROOMS    = [];
+let ROOM_META = {};
+
+async function loadRooms() {
+  const snap = await getDocs(query(collection(db, "rooms"), orderBy("createdAt")));
+  ROOMS = [];
+  ROOM_META = {};
+  snap.forEach(d => {
+    const r = d.data();
+    if (r.status === "suspended") return;
+    const id = d.id;
+    ROOMS.push(id);
+    const hex = r.color || "#888";
+    const bigint = parseInt(hex.replace("#",""), 16);
+    const rr = (bigint >> 16) & 255, gg = (bigint >> 8) & 255, bb = bigint & 255;
+    ROOM_META[id] = {
+      name: r.name,
+      sub:  `ชั้น ${r.floor}${r.capacity ? ` · ${r.note || ""} ${r.capacity} ที่นั่ง` : (r.note ? ` · ${r.note}` : "")}`,
+      color: hex,
+      bg: `rgba(${rr},${gg},${bb},0.12)`
+    };
+  });
+  visibleRooms = new Set(ROOMS);
+
+  // populate booking form select
+  const sel = document.getElementById("bookRoom");
+  sel.innerHTML = ROOMS.map(id => {
+    const m = ROOM_META[id];
+    return `<option value="${id}">${m.name} — ${m.sub}</option>`;
+  }).join("");
+}
 
 const ADMIN_EMAILS = ["civilmbc.techno@gmail.com"];
 const DAY_NAMES    = ["อา","จ","อ","พ","พฤ","ศ","ส"];
@@ -571,7 +740,7 @@ let isGuest       = false;
 let bookings      = [];
 let currentView   = "day";
 let currentDate   = new Date();
-let visibleRooms  = new Set(ROOMS);
+let visibleRooms  = new Set();
 let currentEditId = null;
 let selectedDates = new Set();
 let miniCalDate   = new Date();
@@ -595,11 +764,16 @@ function getUserPhone() {
 const urlParams = new URLSearchParams(window.location.search);
 isGuest = urlParams.get("guest") === "1";
 
+// Load rooms from Firestore first, then start auth
+await loadRooms();
+
 if (isGuest) {
   document.getElementById("guestBanner").style.display = "flex";
-  document.getElementById("userChip").style.display = "flex";
+  document.getElementById("userMenuWrap").style.display = "block";
   document.getElementById("userAvatar").textContent = "ผ";
   document.getElementById("userName").textContent   = "ผู้เยี่ยมชม";
+  document.getElementById("dropdownName").textContent = "ผู้เยี่ยมชม";
+  document.getElementById("dropdownRole").textContent = "Guest";
   const rb = document.getElementById("roleBadge");
   rb.textContent = "Guest"; rb.className = "role-badge guest";
   buildRoomFilters();
@@ -628,33 +802,60 @@ document.getElementById("logoutBtn").addEventListener("click", async () => {
   window.location.href = "login.html";
 });
 
+// ── DROPDOWN TOGGLE ───────────────────────────────────────────
+document.getElementById("userChip").addEventListener("click", (e) => {
+  e.stopPropagation();
+  document.getElementById("userDropdown").classList.toggle("open");
+});
+document.addEventListener("click", () => {
+  document.getElementById("userDropdown").classList.remove("open");
+});
+
+// ── SIDEBAR HAMBURGER ─────────────────────────────────────────
+function openSidebar() {
+  document.getElementById("sidebar").classList.add("open");
+  document.getElementById("sidebarOverlay").classList.add("open");
+}
+function closeSidebar() {
+  document.getElementById("sidebar").classList.remove("open");
+  document.getElementById("sidebarOverlay").classList.remove("open");
+}
+document.getElementById("hamburgerBtn").addEventListener("click", (e) => {
+  e.stopPropagation();
+  const isOpen = document.getElementById("sidebar").classList.contains("open");
+  isOpen ? closeSidebar() : openSidebar();
+});
+document.getElementById("sidebarOverlay").addEventListener("click", closeSidebar);
+
 function initLocalUI(u) {
-  document.getElementById("userChip").style.display = "flex";
-  document.getElementById("userAvatar").textContent = u.displayName[0].toUpperCase();
-  document.getElementById("userName").textContent   = u.displayName;
+  document.getElementById("userMenuWrap").style.display = "block";
+  document.getElementById("userAvatar").textContent  = u.displayName[0].toUpperCase();
+  document.getElementById("userName").textContent    = u.displayName;
+  document.getElementById("dropdownName").textContent = u.displayName;
+  document.getElementById("dropdownRole").textContent = isAdmin ? "ผู้ดูแลระบบ" : "ผู้ใช้งาน";
   const rb = document.getElementById("roleBadge");
   rb.textContent = isAdmin ? "ผู้ดูแล" : "ผู้ใช้งาน";
   rb.className   = "role-badge " + (isAdmin ? "admin" : "user");
-  document.getElementById("logoutBtn").style.display = "block";
   if (isAdmin) {
-    document.getElementById("pendingPanel").style.display = "block";
-    document.getElementById("logsBtn").style.display = "block";
+    document.getElementById("pendingPanel").style.display  = "block";
+    document.getElementById("adminMenuItems").style.display = "block";
   }
   buildRoomFilters();
   loadBookings();
 }
 
 function initFirebaseUI(user) {
-  document.getElementById("userChip").style.display = "flex";
-  document.getElementById("userAvatar").textContent = user.email[0].toUpperCase();
-  document.getElementById("userName").textContent   = user.email.split("@")[0];
+  document.getElementById("userMenuWrap").style.display = "block";
+  document.getElementById("userAvatar").textContent  = user.email[0].toUpperCase();
+  document.getElementById("userName").textContent    = user.email.split("@")[0];
+  document.getElementById("dropdownName").textContent = user.email.split("@")[0];
+  document.getElementById("dropdownRole").textContent = isAdmin ? "ผู้ดูแลระบบ" : "ผู้ใช้งาน";
   const rb = document.getElementById("roleBadge");
   rb.textContent = isAdmin ? "ผู้ดูแล" : "ผู้ใช้งาน";
   rb.className   = "role-badge " + (isAdmin ? "admin" : "user");
-  document.getElementById("logoutBtn").style.display = "block";
   if (isAdmin) {
-    document.getElementById("pendingPanel").style.display = "block";
-    document.getElementById("logsBtn").style.display = "block";
+    document.getElementById("pendingPanel").style.display  = "block";
+    document.getElementById("adminMenuItems").style.display = "block";
   }
   buildRoomFilters();
   loadBookings();
@@ -816,9 +1017,13 @@ function hasConflict(room, start, end, excludeId = null) {
 // ── ROOM FILTERS ─────────────────────────────────────────────
 function buildRoomFilters() {
   const wrap = document.getElementById("roomFilters");
+  const mobileBar = document.getElementById("mobileRoomBar");
   wrap.innerHTML = "";
+  mobileBar.innerHTML = "";
+
   ROOMS.forEach(r => {
     const m  = ROOM_META[r];
+    // sidebar item
     const el = document.createElement("div");
     el.className = "room-filter"; el.dataset.room = r;
     el.innerHTML = `
@@ -836,8 +1041,40 @@ function buildRoomFilters() {
         visibleRooms.add(r); el.classList.remove("off");
       }
       renderCalendar();
+      renderMobileRoomPills();
     });
     wrap.appendChild(el);
+
+    // mobile pill
+    const pill = document.createElement("div");
+    pill.className = "mobile-room-pill active";
+    pill.dataset.room = r;
+    pill.style.background = m.color + "22";
+    pill.style.color = m.color;
+    pill.textContent = m.name;
+    pill.addEventListener("click", () => {
+      if (visibleRooms.has(r)) {
+        if (visibleRooms.size === 1) return;
+        visibleRooms.delete(r);
+      } else {
+        visibleRooms.add(r);
+      }
+      renderMobileRoomPills();
+      // also sync sidebar
+      wrap.querySelectorAll(".room-filter").forEach(el => {
+        el.classList.toggle("off", !visibleRooms.has(el.dataset.room));
+      });
+      renderCalendar();
+    });
+    mobileBar.appendChild(pill);
+  });
+}
+
+function renderMobileRoomPills() {
+  document.querySelectorAll(".mobile-room-pill").forEach(pill => {
+    const active = visibleRooms.has(pill.dataset.room);
+    pill.classList.toggle("active", active);
+    pill.classList.toggle("inactive", !active);
   });
 }
 
@@ -1563,6 +1800,7 @@ document.querySelectorAll(".view-btn[data-view]").forEach(btn => {
     currentView = btn.dataset.view;
     document.querySelectorAll(".view-btn[data-view]").forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
+    closeSidebar();
     renderCalendar();
   });
 });

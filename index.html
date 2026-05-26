@@ -91,6 +91,9 @@
 
     .topbar-spacer { flex: 1; }
 
+    /* date row — inline on desktop, full-width row on mobile */
+    .topbar-date-row { display: contents; }
+
     .user-chip {
       display: flex; align-items: center; gap: 8px;
       padding: 5px 12px 5px 5px; background: var(--surface);
@@ -425,17 +428,29 @@
 
       /* topbar — single row, no wrap */
       .topbar {
-        padding: 0 10px; gap: 6px; height: var(--topbar);
-        flex-wrap: nowrap; overflow: hidden;
+        padding: 0 10px; gap: 6px; height: auto;
+        flex-wrap: wrap; overflow: visible;
+        padding-bottom: 8px; padding-top: 8px;
       }
-      .topbar-brand { display: none; }
-      .topbar-nav { gap: 1px; flex-shrink: 0; }
-      .topbar-nav .view-btn { padding: 5px 8px; font-size: 12px; }
-      .nav-arrow-btn { width: 28px; height: 28px; font-size: 14px; flex-shrink: 0; }
-      .date-label { font-size: 11px; min-width: 0; flex: 1; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-      .today-btn { display: none; }
-      .topbar-spacer { display: none; }
-      .hamburger-btn { display: flex; flex-shrink: 0; }
+
+      /* row 1: hamburger + nav tabs + avatar */
+      .hamburger-btn { order: 1; display: flex; flex-shrink: 0; }
+      .topbar-nav    { order: 2; flex-shrink: 0; gap: 1px; }
+      .topbar-nav .view-btn { padding: 5px 10px; font-size: 13px; }
+      .topbar-spacer { order: 3; flex: 1; }
+      .user-menu-wrap { order: 4; flex-shrink: 0; }
+      .topbar-brand  { display: none; }
+
+      /* row 2: < date > วันนี้ — full width */
+      .topbar-date-row {
+        order: 5; width: 100%;
+        display: flex; align-items: center; gap: 6px;
+        padding-top: 6px; border-top: 1px solid var(--line2);
+      }
+      .nav-arrow-btn { width: 30px; height: 30px; font-size: 14px; flex-shrink: 0; }
+      .date-label { flex: 1; text-align: center; font-size: 13px; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .today-btn  { flex-shrink: 0; padding: 5px 12px; font-size: 13px; display: block; }
+
       .user-name, .role-badge { display: none; }
       .user-chip { padding: 3px; border: none; background: transparent; }
       .user-avatar { width: 30px; height: 30px; flex-shrink: 0; }
@@ -503,10 +518,12 @@
     <button class="view-btn" data-view="week">สัปดาห์</button>
     <button class="view-btn" data-view="month">เดือน</button>
   </div>
-  <button class="nav-arrow-btn" id="prevBtn">&#8249;</button>
-  <div class="date-label" id="dateLabel">—</div>
-  <button class="nav-arrow-btn" id="nextBtn">&#8250;</button>
-  <button class="today-btn" id="todayBtn">วันนี้</button>
+  <div class="topbar-date-row">
+    <button class="nav-arrow-btn" id="prevBtn">&#8249;</button>
+    <div class="date-label" id="dateLabel">—</div>
+    <button class="nav-arrow-btn" id="nextBtn">&#8250;</button>
+    <button class="today-btn" id="todayBtn">วันนี้</button>
+  </div>
   <div class="topbar-spacer"></div>
   <div class="user-menu-wrap" id="userMenuWrap" style="display:none">
     <div class="user-chip" id="userChip">

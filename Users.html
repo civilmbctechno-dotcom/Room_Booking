@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>จัดการผู้ใช้งาน — มีนบุรี</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Sarabun:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --ink: #0f0f10; --ink2: #1e1e22; --muted: #6b6b7a; --muted2: #9898a8;
+      --line: #e4e4ea; --line2: #f0f0f5; --surface: #fafafc; --white: #ffffff;
+      --accent: #2a5cff; --accent-bg: #eef2ff;
+      --danger: #e84040; --danger-bg: #fff0f0;
+      --success: #18b06a; --success-bg: #eafaf3;
+      --warn: #f5a623; --warn-bg: #fff8ee;
+    }
+    body { font-family: 'Sarabun', sans-serif; background: var(--surface); color: var(--ink); min-height: 100vh; }
+
+    .topbar {
+      height: 64px; background: var(--white); border-bottom: 1px solid var(--line);
+      display: flex; align-items: center; padding: 0 24px; gap: 16px;
+      position: sticky; top: 0; z-index: 100;
+    }
+    .topbar-brand { font-family: 'DM Serif Display', serif; font-size: 17px; color: var(--ink); text-decoration: none; }
+    .topbar-brand span { color: var(--accent); }
+    .topbar-title { font-size: 14px; font-weight: 600; color: var(--muted); padding-left: 16px; border-left: 1px solid var(--line); }
+    .topbar-spacer { flex: 1; }
+    .back-btn {
+      padding: 6px 13px; border: 1.5px solid var(--line); background: var(--white);
+      border-radius: 8px; font-family: 'Sarabun', sans-serif; font-size: 14px;
+      font-weight: 500; color: var(--muted); cursor: pointer; text-decoration: none; transition: all 0.15s;
+    }
+    .back-btn:hover { border-color: #bbbbc8; color: var(--ink); }
+
+    .content { max-width: 1000px; margin: 0 auto; padding: 32px 24px; }
+    .page-header { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
+    .page-header h1 { font-family: 'DM Serif Display', serif; font-size: 28px; letter-spacing: -0.5px; }
+    .page-header p { font-size: 14px; color: var(--muted); margin-top: 4px; }
+
+    .btn-primary {
+      padding: 9px 18px; border: none; background: var(--accent); border-radius: 8px;
+      font-family: 'Sarabun', sans-serif; font-size: 14px; font-weight: 600;
+      color: var(--white); cursor: pointer; transition: all 0.15s; white-space: nowrap;
+    }
+    .btn-primary:hover { background: #1a46e0; }
+
+    .filters { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+    .search-input {
+      padding: 8px 14px; border: 1.5px solid var(--line); border-radius: 8px;
+      font-family: 'Sarabun', sans-serif; font-size: 14px; color: var(--ink);
+      background: var(--white); outline: none; transition: border-color 0.15s; min-width: 220px;
+    }
+    .search-input:focus { border-color: var(--accent); }
+    .filter-select {
+      padding: 8px 14px; border: 1.5px solid var(--line); border-radius: 8px;
+      font-family: 'Sarabun', sans-serif; font-size: 14px; color: var(--ink);
+      background: var(--white); outline: none; cursor: pointer;
+    }
+
+    .table-wrap { background: var(--white); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+    table { width: 100%; border-collapse: collapse; }
+    thead th {
+      padding: 11px 16px; text-align: left; font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.6px; color: var(--muted2);
+      background: var(--surface); border-bottom: 1px solid var(--line); white-space: nowrap;
+    }
+    tbody tr { border-bottom: 1px solid var(--line2); transition: background 0.1s; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: #f9f9fc; }
+    tbody tr.suspended-row { opacity: 0.55; }
+    td { padding: 12px 16px; font-size: 14px; vertical-align: middle; }
+
+    .avatar {
+      width: 32px; height: 32px; border-radius: 50%; display: inline-flex;
+      align-items: center; justify-content: center; font-size: 13px; font-weight: 700;
+      color: var(--white); text-transform: uppercase; flex-shrink: 0;
+    }
+    .user-cell { display: flex; align-items: center; gap: 10px; }
+    .user-cell-info .name { font-weight: 600; font-size: 14px; }
+    .user-cell-info .username { font-size: 12px; color: var(--muted2); }
+
+    .badge {
+      display: inline-flex; align-items: center; padding: 3px 9px;
+      border-radius: 20px; font-size: 11px; font-weight: 700; white-space: nowrap;
+    }
+    .badge.admin     { background: var(--accent-bg); color: var(--accent); }
+    .badge.user      { background: var(--success-bg); color: var(--success); }
+    .badge.active    { background: var(--success-bg); color: var(--success); }
+    .badge.suspended { background: var(--danger-bg); color: var(--danger); }
+
+    .action-btns { display: flex; gap: 6px; }
+    .btn-sm {
+      padding: 4px 10px; border-radius: 6px; font-family: 'Sarabun', sans-serif;
+      font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.15s;
+      border: 1.5px solid var(--line); background: var(--white); color: var(--muted);
+    }
+    .btn-sm:hover { border-color: #bbbbc8; color: var(--ink); }
+    .btn-sm.danger  { border-color: var(--danger);  color: var(--danger);  background: var(--danger-bg); }
+    .btn-sm.success { border-color: var(--success); color: var(--success); background: var(--success-bg); }
+    .btn-sm.danger:hover, .btn-sm.success:hover { opacity: 0.75; }
+
+    .empty-state { text-align: center; padding: 60px 20px; color: var(--muted2); }
+    .loading-state { text-align: center; padding: 60px; color: var(--muted2); font-size: 14px; }
+
+    /* MODAL */
+    .modal-backdrop {
+      position: fixed; inset: 0; background: rgba(15,15,16,0.5); backdrop-filter: blur(4px);
+      z-index: 200; display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none; transition: opacity 0.2s;
+    }
+    .modal-backdrop.open { opacity: 1; pointer-events: all; }
+    .modal {
+      background: var(--white); border-radius: 16px; width: 480px; max-width: 95vw;
+      max-height: 90vh; overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.18);
+      transform: translateY(20px) scale(0.97);
+      transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    .modal-backdrop.open .modal { transform: translateY(0) scale(1); }
+    .modal-header { padding: 20px 22px 14px; border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; background: var(--white); z-index: 1; }
+    .modal-title { font-family: 'DM Serif Display', serif; font-size: 20px; }
+    .modal-close { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border: 1.5px solid var(--line); background: var(--white); border-radius: 7px; cursor: pointer; font-size: 14px; color: var(--muted); transition: all 0.15s; }
+    .modal-close:hover { border-color: #bbbbc8; color: var(--ink); }
+    .modal-body { padding: 18px 22px; }
+    .modal-footer { padding: 14px 22px 20px; display: flex; gap: 10px; justify-content: flex-end; border-top: 1px solid var(--line); }
+
+    .form-row { margin-bottom: 14px; }
+    .form-label { display: block; font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
+    .form-input, .form-select {
+      width: 100%; padding: 9px 12px; border: 1.5px solid var(--line); border-radius: 8px;
+      font-family: 'Sarabun', sans-serif; font-size: 14px; color: var(--ink);
+      background: var(--white); outline: none; transition: border-color 0.15s;
+    }
+    .form-input:focus, .form-select:focus { border-color: var(--accent); }
+    .form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+    .form-hint { font-size: 11px; color: var(--muted2); margin-top: 4px; }
+
+    .password-wrap { position: relative; }
+    .password-wrap .form-input { padding-right: 40px; }
+    .pw-toggle {
+      position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; cursor: pointer; color: var(--muted2); font-size: 16px;
+    }
+
+    .section-divider {
+      font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
+      color: var(--muted2); margin: 18px 0 12px; padding-bottom: 6px;
+      border-bottom: 1px solid var(--line2);
+    }
+
+    .btn-cancel {
+      padding: 9px 18px; border: 1.5px solid var(--line); background: var(--white);
+      border-radius: 8px; font-family: 'Sarabun', sans-serif; font-size: 14px;
+      font-weight: 500; color: var(--muted); cursor: pointer; transition: all 0.15s;
+    }
+    .btn-cancel:hover { border-color: #bbbbc8; color: var(--ink); }
+    .btn-submit {
+      padding: 9px 22px; border: none; background: var(--accent); border-radius: 8px;
+      font-family: 'Sarabun', sans-serif; font-size: 14px; font-weight: 600;
+      color: var(--white); cursor: pointer; transition: all 0.15s;
+    }
+    .btn-submit:hover { background: #1a46e0; }
+    .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px);
+      background: var(--ink2); color: var(--white); padding: 11px 20px; border-radius: 10px;
+      font-size: 14px; font-weight: 500; box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+      z-index: 999; transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1); white-space: nowrap;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+
+    ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+
+    /* ── mobile cards ── */
+    .user-cards { display: none; }
+    .user-card {
+      background: var(--white); border: 1px solid var(--line); border-radius: 10px;
+      padding: 14px; margin-bottom: 10px;
+    }
+    .user-card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .user-card-info { flex: 1; min-width: 0; }
+    .user-card-name { font-size: 14px; font-weight: 700; }
+    .user-card-username { font-size: 12px; color: var(--muted2); }
+    .user-card-meta { font-size: 12px; color: var(--muted); line-height: 1.8; margin-bottom: 10px; }
+    .user-card-footer { display: flex; gap: 8px; justify-content: flex-end; padding-top: 8px; border-top: 1px solid var(--line2); }
+
+    @media (max-width: 768px) {
+      .topbar { padding: 0 14px; gap: 10px; height: 56px; }
+      .topbar-title { display: none; }
+      .topbar-brand { font-size: 15px; }
+      .content { padding: 16px 14px; }
+      .page-header { flex-direction: column; align-items: flex-start; gap: 12px; margin-bottom: 16px; }
+      .page-header h1 { font-size: 22px; }
+      .btn-primary { width: 100%; text-align: center; }
+      .filters { gap: 8px; }
+      .search-input { width: 100%; min-width: 0; }
+      .filter-select { font-size: 13px; }
+      .table-wrap table { display: none; }
+      .user-cards { display: block; }
+      .modal { width: 100% !important; max-width: 100% !important; border-radius: 20px 20px 0 0 !important; position: fixed; bottom: 0; left: 0; right: 0; max-height: 92vh; }
+      .modal-backdrop { align-items: flex-end; }
+      .modal-backdrop .modal { transform: translateY(40px) !important; }
+      .modal-backdrop.open .modal { transform: translateY(0) !important; }
+      .form-row-2 { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <a href="room-booking.html" class="topbar-brand">มีนบุรี <span>ห้องประชุม</span></a>
+  <div class="topbar-title">👥 จัดการผู้ใช้งาน</div>
+  <div class="topbar-spacer"></div>
+  <a href="room-booking.html" class="back-btn">← กลับ</a>
+</div>
+
+<div class="content">
+  <div class="page-header">
+    <div>
+      <h1>จัดการผู้ใช้งาน</h1>
+      <p>เพิ่ม แก้ไข หรือระงับบัญชีผู้ใช้งาน</p>
+    </div>
+    <button class="btn-primary" id="addUserBtn">+ เพิ่มผู้ใช้งาน</button>
+  </div>
+
+  <div class="filters">
+    <input class="search-input" id="searchInput" placeholder="🔍 ค้นหาชื่อ, username..." />
+    <select class="filter-select" id="roleFilter">
+      <option value="all">ทุกตำแหน่ง</option>
+      <option value="admin">ผู้ดูแล</option>
+      <option value="user">ผู้ใช้งาน</option>
+    </select>
+    <select class="filter-select" id="statusFilter">
+      <option value="all">ทุกสถานะ</option>
+      <option value="active">เปิดใช้งาน</option>
+      <option value="suspended">ระงับแล้ว</option>
+    </select>
+    <select class="filter-select" id="courtFilter">
+      <option value="all">ทุกศาล</option>
+      <option value="ศาลแพ่งมีนบุรี">ศาลแพ่งมีนบุรี</option>
+      <option value="ศาลอาญามีนบุรี">ศาลอาญามีนบุรี</option>
+      <option value="ศาลเยาวชนมีนบุรี">ศาลเยาวชนมีนบุรี</option>
+    </select>
+  </div>
+
+  <div id="loadingState" class="loading-state">กำลังโหลด...</div>
+  <div class="table-wrap" id="tableWrap" style="display:none">
+    <table>
+      <thead>
+        <tr>
+          <th>ผู้ใช้งาน</th>
+          <th>ศาล / หน่วยงาน</th>
+          <th>เบอร์โทร</th>
+          <th>ตำแหน่ง</th>
+          <th>สถานะ</th>
+          <th>หมายเหตุ</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="usersBody"></tbody>
+    </table>
+    <div class="user-cards" id="userCards"></div>
+    <div class="empty-state" id="emptyState" style="display:none">
+      <div style="font-size:36px;margin-bottom:12px">👤</div>
+      <p style="font-size:14px">ไม่พบผู้ใช้งาน</p>
+    </div>
+  </div>
+</div>
+
+<!-- USER MODAL -->
+<div class="modal-backdrop" id="userModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle">เพิ่มผู้ใช้งาน</div>
+      <button class="modal-close" id="modalClose">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="section-divider">ข้อมูลบัญชี</div>
+      <div class="form-row-2">
+        <div>
+          <label class="form-label">Username <span style="color:var(--danger)">*</span></label>
+          <input class="form-input" id="fUsername" placeholder="เช่น john_doe" autocomplete="off" />
+          <div class="form-hint" id="usernameHint"></div>
+        </div>
+        <div>
+          <label class="form-label">ชื่อแสดงผล <span style="color:var(--danger)">*</span></label>
+          <input class="form-input" id="fDisplayName" placeholder="เช่น นายสมชาย ใจดี" />
+        </div>
+      </div>
+      <div class="form-row" id="passwordRow">
+        <label class="form-label" id="passwordLabel">รหัสผ่าน <span style="color:var(--danger)">*</span></label>
+        <div class="password-wrap">
+          <input class="form-input" id="fPassword" type="password" placeholder="อย่างน้อย 6 ตัวอักษร" autocomplete="new-password" />
+          <button type="button" class="pw-toggle" id="pwToggle">👁</button>
+        </div>
+        <div class="form-hint" id="passwordHint">ใส่รหัสผ่านใหม่เพื่อ reset (ถ้าไม่ใส่จะใช้รหัสผ่านเดิม)</div>
+      </div>
+
+      <div class="section-divider">ข้อมูลส่วนตัว</div>
+      <div class="form-row-2">
+        <div>
+          <label class="form-label">ศาล / หน่วยงาน</label>
+          <select class="form-select" id="fCourt">
+            <option value="">— ไม่ระบุ —</option>
+            <option value="ศาลแพ่งมีนบุรี">ศาลแพ่งมีนบุรี</option>
+            <option value="ศาลอาญามีนบุรี">ศาลอาญามีนบุรี</option>
+            <option value="ศาลเยาวชนมีนบุรี">ศาลเยาวชนมีนบุรี</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label">เบอร์โทร</label>
+          <input class="form-input" id="fPhone" type="tel" placeholder="0XX-XXX-XXXX" />
+        </div>
+      </div>
+
+      <div class="section-divider">สิทธิ์และสถานะ</div>
+      <div class="form-row-2">
+        <div>
+          <label class="form-label">ตำแหน่ง</label>
+          <select class="form-select" id="fRole">
+            <option value="user">ผู้ใช้งาน</option>
+            <option value="admin">ผู้ดูแลระบบ</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label">สถานะ</label>
+          <select class="form-select" id="fStatus">
+            <option value="active">เปิดใช้งาน</option>
+            <option value="suspended">ระงับการใช้งาน</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <label class="form-label">หมายเหตุ</label>
+        <textarea class="form-input" id="fNote" rows="2" placeholder="บันทึกเพิ่มเติม..." style="resize:vertical;line-height:1.5"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" id="modalCancel">ยกเลิก</button>
+      <button class="btn-submit" id="modalSubmit">บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import {
+  getFirestore, collection, getDocs, addDoc, setDoc, updateDoc, doc, onSnapshot, query, orderBy
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBIoOIk7O-oEt7yCgGGFq4w1ONXUuZBj0g",
+  authDomain: "minburi-meeting-room-f34c4.firebaseapp.com",
+  projectId: "minburi-meeting-room-f34c4",
+  storageBucket: "minburi-meeting-room-f34c4.firebasestorage.app",
+  messagingSenderId: "520841331829",
+  appId: "1:520841331829:web:ad701c93283cd53b48243c"
+};
+
+const app  = initializeApp(firebaseConfig);
+const db   = getFirestore(app);
+const auth = getAuth(app);
+const ADMIN_EMAILS = ["civilmbc.techno@gmail.com"];
+
+const COURT_COLORS = {
+  "ศาลแพ่งมีนบุรี":   "#2a5cff",
+  "ศาลอาญามีนบุรี":   "#e84040",
+  "ศาลเยาวชนมีนบุรี": "#18b06a",
+};
+
+// ── AUTH ─────────────────────────────────────────────────────
+const savedLocal = sessionStorage.getItem("localUser");
+if (savedLocal) {
+  const u = JSON.parse(savedLocal);
+  if (u.role !== "admin") { window.location.href = "room-booking.html"; }
+  else init();
+} else {
+  onAuthStateChanged(auth, user => {
+    if (!user) { window.location.href = "login.html"; return; }
+    if (!ADMIN_EMAILS.includes(user.email)) { window.location.href = "room-booking.html"; return; }
+    init();
+  });
+}
+
+let allUsers = [];
+let editId   = null;
+let searchQ  = "";
+let filterRole   = "all";
+let filterStatus = "all";
+let filterCourt  = "all";
+
+function init() {
+  onSnapshot(collection(db, "users"), snap => {
+    allUsers = [];
+    snap.forEach(d => allUsers.push({ id: d.id, ...d.data() }));
+    allUsers.sort((a, b) => (a.displayName || "").localeCompare(b.displayName || "", "th"));
+    document.getElementById("loadingState").style.display = "none";
+    document.getElementById("tableWrap").style.display    = "block";
+    renderUsers();
+  });
+}
+
+// ── RENDER ───────────────────────────────────────────────────
+function getFiltered() {
+  return allUsers.filter(u => {
+    if (filterRole   !== "all" && u.role   !== filterRole)   return false;
+    if (filterStatus !== "all" && (u.status || "active") !== filterStatus) return false;
+    if (filterCourt  !== "all" && u.court  !== filterCourt)  return false;
+    if (searchQ) {
+      const q = searchQ.toLowerCase();
+      if (!(u.displayName?.toLowerCase().includes(q) || u.username?.toLowerCase().includes(q))) return false;
+    }
+    return true;
+  });
+}
+
+function renderUsers() {
+  const filtered = getFiltered();
+  const tbody = document.getElementById("usersBody");
+  const empty = document.getElementById("emptyState");
+
+  if (!filtered.length) {
+    tbody.innerHTML = "";
+    empty.style.display = "block";
+    return;
+  }
+  empty.style.display = "none";
+
+  tbody.innerHTML = filtered.map(u => {
+    const status  = u.status || "active";
+    const color   = COURT_COLORS[u.court] || "#9898a8";
+    const initials = (u.displayName || u.username || "?")[0].toUpperCase();
+    return `
+    <tr class="${status === "suspended" ? "suspended-row" : ""}">
+      <td>
+        <div class="user-cell">
+          <div class="avatar" style="background:${color}">${esc(initials)}</div>
+          <div class="user-cell-info">
+            <div class="name">${esc(u.displayName || "—")}</div>
+            <div class="username">@${esc(u.username || u.id)}</div>
+          </div>
+        </div>
+      </td>
+      <td style="font-size:13px">${u.court ? `<span style="color:${color};font-weight:600">${esc(u.court)}</span>` : '<span style="color:var(--muted2)">—</span>'}</td>
+      <td style="font-size:13px;color:var(--muted)">${esc(u.phone || "—")}</td>
+      <td><span class="badge ${u.role === "admin" ? "admin" : "user"}">${u.role === "admin" ? "👑 ผู้ดูแล" : "👤 ผู้ใช้งาน"}</span></td>
+      <td><span class="badge ${status}">${status === "active" ? "✓ เปิดใช้งาน" : "✕ ระงับแล้ว"}</span></td>
+      <td style="font-size:12px;color:var(--muted2);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(u.note || "—")}</td>
+      <td>
+        <div class="action-btns">
+          <button class="btn-sm ${status === "active" ? "danger" : "success"}" data-toggle="${u.id}" data-status="${status}">
+            ${status === "active" ? "ระงับ" : "เปิดใช้"}
+          </button>
+          <button class="btn-sm" data-edit="${u.id}">✏️ แก้ไข</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join("");
+
+  // ── mobile cards ──
+  const cards = document.getElementById("userCards");
+  if (cards) {
+    cards.innerHTML = filtered.map(u => {
+      const status  = u.status || "active";
+      const color   = COURT_COLORS[u.court] || "#9898a8";
+      const initials = (u.displayName || u.username || "?")[0].toUpperCase();
+      return `
+      <div class="user-card ${status === "suspended" ? "suspended-row" : ""}">
+        <div class="user-card-header">
+          <div class="avatar" style="background:${color};width:38px;height:38px;font-size:15px">${esc(initials)}</div>
+          <div class="user-card-info">
+            <div class="user-card-name">${esc(u.displayName || "—")}</div>
+            <div class="user-card-username">@${esc(u.username || u.id)}</div>
+          </div>
+          <span class="badge ${u.role === "admin" ? "admin" : "user"}">${u.role === "admin" ? "👑" : "👤"}</span>
+          <span class="badge ${status}">${status === "active" ? "✓" : "✕"}</span>
+        </div>
+        <div class="user-card-meta">
+          ${u.court ? `🏛 <span style="color:${color};font-weight:600">${esc(u.court)}</span><br>` : ""}
+          ${u.phone ? `📞 ${esc(u.phone)}<br>` : ""}
+          ${u.note  ? `📝 ${esc(u.note)}` : ""}
+        </div>
+        <div class="user-card-footer">
+          <button class="btn-sm ${status === "active" ? "danger" : "success"}" data-toggle="${u.id}" data-status="${status}">
+            ${status === "active" ? "ระงับ" : "เปิดใช้"}
+          </button>
+          <button class="btn-sm" data-edit="${u.id}">✏️ แก้ไข</button>
+        </div>
+      </div>`;
+    }).join("");
+
+    cards.querySelectorAll("[data-edit]").forEach(btn => btn.addEventListener("click", () => openModal(btn.dataset.edit)));
+    cards.querySelectorAll("[data-toggle]").forEach(btn => btn.addEventListener("click", () => toggleStatus(btn.dataset.toggle, btn.dataset.status)));
+  }
+
+  tbody.querySelectorAll("[data-edit]").forEach(btn => {
+    btn.addEventListener("click", () => openModal(btn.dataset.edit));
+  });
+  tbody.querySelectorAll("[data-toggle]").forEach(btn => {
+    btn.addEventListener("click", () => toggleStatus(btn.dataset.toggle, btn.dataset.status));
+  });
+}
+
+// ── FILTERS ───────────────────────────────────────────────────
+document.getElementById("searchInput").addEventListener("input", e => { searchQ = e.target.value.trim(); renderUsers(); });
+document.getElementById("roleFilter").addEventListener("change", e => { filterRole = e.target.value; renderUsers(); });
+document.getElementById("statusFilter").addEventListener("change", e => { filterStatus = e.target.value; renderUsers(); });
+document.getElementById("courtFilter").addEventListener("change", e => { filterCourt = e.target.value; renderUsers(); });
+
+// ── MODAL ────────────────────────────────────────────────────
+function openModal(id = null) {
+  editId = id;
+  const u = id ? allUsers.find(x => x.id === id) : null;
+  const isEdit = !!id;
+
+  document.getElementById("modalTitle").textContent = isEdit ? "แก้ไขผู้ใช้งาน" : "เพิ่มผู้ใช้งาน";
+  document.getElementById("fUsername").value    = u?.username || u?.id || "";
+  document.getElementById("fUsername").readOnly = isEdit; // can't change username in edit mode
+  document.getElementById("fUsername").style.background = isEdit ? "var(--surface)" : "";
+  document.getElementById("fUsername").style.color      = isEdit ? "var(--muted)" : "";
+  document.getElementById("usernameHint").textContent   = isEdit ? "ไม่สามารถเปลี่ยน username ได้" : "";
+  document.getElementById("fDisplayName").value = u?.displayName || "";
+  document.getElementById("fPassword").value    = "";
+  document.getElementById("fPassword").type     = "password";
+  document.getElementById("pwToggle").textContent = "👁";
+  document.getElementById("passwordLabel").innerHTML = isEdit
+    ? 'รหัสผ่าน <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted2)">(ไม่บังคับ — ใส่เพื่อ reset)</span>'
+    : 'รหัสผ่าน <span style="color:var(--danger)">*</span>';
+  document.getElementById("fCourt").value  = u?.court  || "";
+  document.getElementById("fPhone").value  = u?.phone  || "";
+  document.getElementById("fRole").value   = u?.role   || "user";
+  document.getElementById("fStatus").value = u?.status || "active";
+  document.getElementById("fNote").value   = u?.note   || "";
+
+  document.getElementById("userModal").classList.add("open");
+  setTimeout(() => document.getElementById(isEdit ? "fDisplayName" : "fUsername").focus(), 100);
+}
+
+function closeModal() {
+  document.getElementById("userModal").classList.remove("open");
+  editId = null;
+}
+
+document.getElementById("addUserBtn").onclick  = () => openModal();
+document.getElementById("modalClose").onclick  = closeModal;
+document.getElementById("modalCancel").onclick = closeModal;
+document.getElementById("userModal").addEventListener("click", e => { if (e.target === e.currentTarget) closeModal(); });
+
+// password toggle
+document.getElementById("pwToggle").addEventListener("click", () => {
+  const inp = document.getElementById("fPassword");
+  const btn = document.getElementById("pwToggle");
+  inp.type = inp.type === "password" ? "text" : "password";
+  btn.textContent = inp.type === "password" ? "👁" : "🙈";
+});
+
+document.getElementById("modalSubmit").addEventListener("click", async () => {
+  const username    = document.getElementById("fUsername").value.trim();
+  const displayName = document.getElementById("fDisplayName").value.trim();
+  const password    = document.getElementById("fPassword").value;
+  const court       = document.getElementById("fCourt").value;
+  const phone       = document.getElementById("fPhone").value.trim();
+  const role        = document.getElementById("fRole").value;
+  const status      = document.getElementById("fStatus").value;
+  const note        = document.getElementById("fNote").value.trim();
+  const isEdit      = !!editId;
+
+  if (!username)    { toast("กรุณากรอก Username"); document.getElementById("fUsername").focus(); return; }
+  if (!displayName) { toast("กรุณากรอกชื่อแสดงผล"); document.getElementById("fDisplayName").focus(); return; }
+  if (!isEdit && !password) { toast("กรุณากรอกรหัสผ่าน"); document.getElementById("fPassword").focus(); return; }
+  if (password && password.length < 6) { toast("รหัสผ่านต้องอย่างน้อย 6 ตัวอักษร"); document.getElementById("fPassword").focus(); return; }
+
+  document.getElementById("modalSubmit").disabled = true;
+
+  try {
+    const data = { username, displayName, court, phone, role, status, note, updatedAt: new Date() };
+
+    if (password) {
+      data.password = await hashPassword(password);
+    }
+
+    if (isEdit) {
+      await updateDoc(doc(db, "users", editId), data);
+      toast("แก้ไขผู้ใช้งานเรียบร้อยแล้ว ✓");
+    } else {
+      // check duplicate username
+      const existing = allUsers.find(u => (u.username || u.id) === username);
+      if (existing) { toast("Username นี้มีอยู่แล้วในระบบ"); document.getElementById("modalSubmit").disabled = false; return; }
+      await setDoc(doc(db, "users", username), { ...data, createdAt: new Date() });
+      toast("เพิ่มผู้ใช้งานเรียบร้อยแล้ว ✓");
+    }
+    closeModal();
+  } catch (e) {
+    console.error(e);
+    toast("เกิดข้อผิดพลาด: " + e.message);
+  }
+  document.getElementById("modalSubmit").disabled = false;
+});
+
+async function toggleStatus(id, currentStatus) {
+  const newStatus = currentStatus === "active" ? "suspended" : "active";
+  const u = allUsers.find(x => x.id === id);
+  const label = newStatus === "suspended" ? "ระงับ" : "เปิดใช้งาน";
+  if (!confirm(`ยืนยัน${label}บัญชี "${u?.displayName || id}"?`)) return;
+  await updateDoc(doc(db, "users", id), { status: newStatus, updatedAt: new Date() });
+  toast(`${label}บัญชีเรียบร้อยแล้ว ✓`);
+}
+
+// ── HELPERS ───────────────────────────────────────────────────
+async function hashPassword(str) {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,"0")).join("");
+}
+
+let toastTimer = null;
+function toast(msg) {
+  const el = document.getElementById("toast");
+  el.textContent = msg; el.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove("show"), 3500);
+}
+function esc(s) {
+  return String(s ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+</script>
+</body>
+</html>

@@ -423,19 +423,26 @@
     @media (max-width: 768px) {
       :root { --sidebar: 280px; --topbar: 56px; }
 
-      /* topbar */
-      .topbar { padding: 0 12px; gap: 8px; height: var(--topbar); }
-      .topbar-brand { font-size: 15px; }
-      .topbar-nav .view-btn { padding: 5px 8px; font-size: 13px; }
-      .date-label { font-size: 12px; min-width: 0; flex: 1; text-align: center; }
+      /* topbar — single row, no wrap */
+      .topbar {
+        padding: 0 10px; gap: 6px; height: var(--topbar);
+        flex-wrap: nowrap; overflow: hidden;
+      }
+      .topbar-brand { display: none; }
+      .topbar-nav { gap: 1px; flex-shrink: 0; }
+      .topbar-nav .view-btn { padding: 5px 8px; font-size: 12px; }
+      .nav-arrow-btn { width: 28px; height: 28px; font-size: 14px; flex-shrink: 0; }
+      .date-label { font-size: 11px; min-width: 0; flex: 1; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
       .today-btn { display: none; }
-      .hamburger-btn { display: flex; }
+      .topbar-spacer { display: none; }
+      .hamburger-btn { display: flex; flex-shrink: 0; }
       .user-name, .role-badge { display: none; }
-      .user-avatar { width: 30px; height: 30px; }
+      .user-chip { padding: 3px; border: none; background: transparent; }
+      .user-avatar { width: 30px; height: 30px; flex-shrink: 0; }
 
       /* sidebar — slide in from left */
       .sidebar {
-        position: fixed; left: -var(--sidebar); top: 0; height: 100vh;
+        position: fixed; top: 0; left: 0; height: 100vh;
         z-index: 160; transform: translateX(-100%);
         transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
         box-shadow: none; width: var(--sidebar);
@@ -454,9 +461,6 @@
       /* calendar */
       .calendar-wrap { overflow-x: auto; }
 
-      /* topbar nav - smaller */
-      .topbar-nav { gap: 2px; }
-
       /* modals full-screen on mobile */
       .modal {
         width: 100% !important; max-width: 100% !important;
@@ -465,29 +469,34 @@
         max-height: 92vh;
       }
       .modal-backdrop { align-items: flex-end; }
-      .modal-backdrop .modal {
-        transform: translateY(40px) scale(1) !important;
-      }
-      .modal-backdrop.open .modal {
-        transform: translateY(0) scale(1) !important;
-      }
+      .modal-backdrop .modal { transform: translateY(40px) scale(1) !important; }
+      .modal-backdrop.open .modal { transform: translateY(0) scale(1) !important; }
 
       /* guest banner */
       .guest-banner { font-size: 13px; padding: 7px 12px; }
     }
 
-    @media (max-width: 480px) {
-      .topbar-brand { display: none; }
-      .nav-arrow-btn { width: 28px; height: 28px; font-size: 14px; }
+    /* ── NOTIFICATION DOT ── */
+    .notif-wrap { position: relative; display: inline-flex; }
+    .notif-dot {
+      display: none;
+      position: absolute; top: -4px; right: -4px;
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--danger); border: 2px solid var(--white);
+      z-index: 10;
     }
+    .notif-dot.show { display: block; }
   </style>
 </head>
 <body>
 
 <div class="topbar">
-  <button class="hamburger-btn" id="hamburgerBtn">
-    <span></span><span></span><span></span>
-  </button>
+  <div class="notif-wrap">
+    <button class="hamburger-btn" id="hamburgerBtn">
+      <span></span><span></span><span></span>
+    </button>
+    <span class="notif-dot" id="pendingDot"></span>
+  </div>
   <div class="topbar-brand">มีนบุรี <span>ห้องประชุม</span></div>
   <div class="topbar-nav">
     <button class="view-btn active" data-view="day">วัน</button>
@@ -1085,7 +1094,12 @@ function updateRoomCounts() {
 // ── PENDING PANEL ─────────────────────────────────────────────
 function renderPending() {
   const list = document.getElementById("pendingList");
+  const dot  = document.getElementById("pendingDot");
   const pending = bookings.filter(b => b.status === "pending");
+
+  // show/hide red dot on hamburger
+  if (dot) dot.classList.toggle("show", pending.length > 0);
+
   if (!pending.length) {
     list.innerHTML = '<div class="empty-pending">ไม่มีรายการรออนุมัติ</div>';
     return;

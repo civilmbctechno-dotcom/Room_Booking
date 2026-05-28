@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>คู่มือการใช้งาน — ระบบจองห้องประชุมมีนบุรี</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --ink: #0f0f10;
+      --ink2: #1e1e22;
+      --muted: #6b6b7a;
+      --muted2: #9898a8;
+      --line: #e4e4ea;
+      --line2: #f0f0f5;
+      --surface: #fafafc;
+      --white: #ffffff;
+      --accent: #2a5cff;
+      --accent-bg: #eef2ff;
+      --success: #18b06a;
+      --success-bg: #eafaf3;
+      --warn: #f5a623;
+      --warn-bg: #fff8ee;
+      --danger: #e84040;
+      --danger-bg: #fff0f0;
+    }
+
+    body {
+      font-family: 'Sarabun', sans-serif;
+      background: var(--surface);
+      color: var(--ink);
+      line-height: 1.6;
+    }
+
+    /* ── TOPBAR ── */
+    .topbar {
+      background: var(--ink);
+      padding: 0 32px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .topbar-brand {
+      font-family: 'DM Serif Display', serif;
+      font-size: 18px;
+      color: var(--white);
+    }
+    .topbar-brand span { color: #aab4ff; }
+    .topbar-title {
+      font-size: 13px;
+      color: rgba(255,255,255,0.5);
+      padding-left: 16px;
+      border-left: 1px solid rgba(255,255,255,0.15);
+    }
+    .topbar-spacer { flex: 1; }
+    .topbar-back {
+      font-size: 13px;
+      color: rgba(255,255,255,0.6);
+      text-decoration: none;
+      padding: 6px 14px;
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 8px;
+      transition: all 0.15s;
+    }
+    .topbar-back:hover { color: #fff; border-color: rgba(255,255,255,0.4); }
+
+    /* ── HERO ── */
+    .hero {
+      background: var(--ink);
+      padding: 64px 32px 80px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse at 10% 90%, rgba(42,92,255,0.3) 0%, transparent 55%),
+        radial-gradient(ellipse at 90% 10%, rgba(24,176,106,0.15) 0%, transparent 50%);
+      pointer-events: none;
+    }
+    .hero-inner {
+      max-width: 760px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+    }
+    .hero-eyebrow {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #aab4ff;
+      margin-bottom: 16px;
+    }
+    .hero h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(32px, 5vw, 52px);
+      color: var(--white);
+      line-height: 1.1;
+      letter-spacing: -1px;
+      margin-bottom: 16px;
+    }
+    .hero h1 em { font-style: italic; color: #aab4ff; }
+    .hero p {
+      font-size: 16px;
+      color: rgba(255,255,255,0.55);
+      max-width: 520px;
+      line-height: 1.7;
+    }
+
+    .hero-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 28px;
+    }
+    .hero-tag {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 5px 13px;
+      border-radius: 100px;
+      border: 1px solid rgba(255,255,255,0.15);
+      color: rgba(255,255,255,0.6);
+    }
+
+    /* ── LAYOUT ── */
+    .page {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 48px 24px 80px;
+    }
+
+    /* ── TOC ── */
+    .toc {
+      background: var(--white);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 24px 28px;
+      margin-bottom: 48px;
+    }
+    .toc-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--muted2);
+      margin-bottom: 14px;
+    }
+    .toc-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 6px;
+    }
+    .toc-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 10px;
+      border-radius: 8px;
+      text-decoration: none;
+      color: var(--ink);
+      font-size: 14px;
+      font-weight: 500;
+      transition: background 0.1s;
+    }
+    .toc-item:hover { background: var(--line2); }
+    .toc-num {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--accent);
+      min-width: 20px;
+    }
+
+    /* ── SECTION ── */
+    .section {
+      margin-bottom: 56px;
+    }
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--line);
+    }
+    .section-num {
+      font-family: 'DM Serif Display', serif;
+      font-size: 28px;
+      color: var(--accent);
+      line-height: 1;
+      min-width: 36px;
+    }
+    .section-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: 24px;
+      letter-spacing: -0.4px;
+    }
+    .section-icon { font-size: 22px; }
+
+    /* ── STEP CARD ── */
+    .steps {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .step {
+      display: flex;
+      gap: 16px;
+      background: var(--white);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 18px 20px;
+      transition: box-shadow 0.15s;
+    }
+    .step:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
+    .step-num {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .step-body { flex: 1; min-width: 0; }
+    .step-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 5px;
+    }
+    .step-desc {
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+    .step-desc strong { color: var(--ink); font-weight: 600; }
+    .step-desc code {
+      background: var(--line2);
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-size: 13px;
+      font-family: monospace;
+      color: var(--accent);
+    }
+
+    /* ── TIP / NOTE / WARN CALLOUT ── */
+    .callout {
+      display: flex;
+      gap: 12px;
+      padding: 14px 16px;
+      border-radius: 10px;
+      margin: 12px 0;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .callout.tip  { background: var(--success-bg); color: #0e6b40; border: 1px solid rgba(24,176,106,0.2); }
+    .callout.note { background: var(--accent-bg);  color: #1a3da6; border: 1px solid rgba(42,92,255,0.2); }
+    .callout.warn { background: var(--warn-bg);    color: #7a5000; border: 1px solid rgba(245,166,35,0.25); }
+    .callout.danger { background: var(--danger-bg); color: #8b1a1a; border: 1px solid rgba(232,64,64,0.2); }
+    .callout-icon { font-size: 18px; flex-shrink: 0; line-height: 1.4; }
+    .callout strong { font-weight: 700; }
+
+    /* ── ROLE CARDS ── */
+    .role-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 14px;
+      margin-bottom: 28px;
+    }
+    .role-card {
+      background: var(--white);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 20px;
+    }
+    .role-card-icon { font-size: 28px; margin-bottom: 10px; }
+    .role-card-title { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+    .role-card-desc { font-size: 13px; color: var(--muted); line-height: 1.6; }
+    .role-card.admin  { border-color: rgba(42,92,255,0.3); background: linear-gradient(135deg, #fff 80%, #eef2ff); }
+    .role-card.user   { border-color: rgba(24,176,106,0.3); background: linear-gradient(135deg, #fff 80%, #eafaf3); }
+    .role-card.guest  { border-color: rgba(155,89,182,0.3); background: linear-gradient(135deg, #fff 80%, #f5eeff); }
+
+    /* ── STATUS BADGES ── */
+    .badge-demo {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 12px 0;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .badge.pending   { background: var(--warn-bg);    color: var(--warn);    border: 1px solid rgba(245,166,35,0.3); }
+    .badge.approved  { background: var(--accent-bg);  color: var(--accent);  border: 1px solid rgba(42,92,255,0.2); }
+    .badge.active    { background: var(--success-bg); color: var(--success); border: 1px solid rgba(24,176,106,0.2); }
+    .badge.completed { background: var(--line2);      color: var(--muted);   border: 1px solid var(--line); }
+    .badge.rejected  { background: var(--danger-bg);  color: var(--danger);  border: 1px solid rgba(232,64,64,0.2); }
+
+    /* ── VIEW TABS ── */
+    .view-tabs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin: 16px 0;
+    }
+    .view-tab {
+      background: var(--white);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+    }
+    .view-tab-icon { font-size: 24px; margin-bottom: 8px; }
+    .view-tab-name { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+    .view-tab-desc { font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+    /* ── ADMIN TABLE ── */
+    .admin-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+      background: var(--white);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .admin-table th {
+      padding: 10px 14px;
+      background: var(--surface);
+      text-align: left;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--muted2);
+      border-bottom: 1px solid var(--line);
+    }
+    .admin-table td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line2);
+      color: var(--muted);
+      line-height: 1.55;
+    }
+    .admin-table tr:last-child td { border-bottom: none; }
+    .admin-table td:first-child { font-weight: 600; color: var(--ink); }
+
+    /* ── SCREEN MOCKUP ── */
+    .screen-mockup {
+      background: var(--ink);
+      border-radius: 16px;
+      padding: 12px;
+      margin: 20px 0;
+      position: relative;
+      overflow: hidden;
+    }
+    .screen-mockup::before {
+      content: '● ● ●';
+      font-size: 10px;
+      color: rgba(255,255,255,0.3);
+      letter-spacing: 5px;
+      display: block;
+      margin-bottom: 10px;
+      padding: 0 4px;
+    }
+    .screen-inner {
+      background: var(--surface);
+      border-radius: 10px;
+      padding: 20px;
+    }
+
+    /* ── QUICK REF GRID ── */
+    .quick-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 10px;
+      margin: 16px 0;
+    }
+    .quick-item {
+      background: var(--white);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 14px;
+      text-align: center;
+    }
+    .quick-item-icon { font-size: 22px; margin-bottom: 6px; }
+    .quick-item-label { font-size: 13px; font-weight: 600; color: var(--ink); margin-bottom: 3px; }
+    .quick-item-detail { font-size: 11px; color: var(--muted2); }
+
+    /* ── FAQ ── */
+    .faq { display: flex; flex-direction: column; gap: 8px; }
+    .faq-item {
+      background: var(--white);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .faq-q {
+      padding: 14px 18px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      user-select: none;
+    }
+    .faq-q:hover { background: var(--line2); }
+    .faq-arrow { font-size: 12px; color: var(--muted2); transition: transform 0.2s; }
+    .faq-item.open .faq-arrow { transform: rotate(180deg); }
+    .faq-a {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+    .faq-item.open .faq-a { max-height: 400px; }
+    .faq-a-inner { padding: 0 18px 16px; border-top: 1px solid var(--line2); padding-top: 12px; }
+
+    /* ── FOOTER ── */
+    .footer {
+      background: var(--ink);
+      padding: 40px 32px;
+      text-align: center;
+      color: rgba(255,255,255,0.4);
+      font-size: 13px;
+    }
+    .footer strong { color: rgba(255,255,255,0.7); }
+
+    /* ── DIVIDER ── */
+    .section-divider {
+      height: 1px;
+      background: linear-gradient(to right, transparent, var(--line), transparent);
+      margin: 48px 0;
+    }
+
+    @media (max-width: 640px) {
+      .topbar { padding: 0 16px; }
+      .hero { padding: 40px 16px 60px; }
+      .page { padding: 32px 16px 60px; }
+      .view-tabs { grid-template-columns: 1fr; }
+      .role-cards { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-brand">มีนบุรี <span>ห้องประชุม</span></div>
+  <div class="topbar-title">📖 คู่มือการใช้งาน</div>
+  <div class="topbar-spacer"></div>
+  <a href="room-booking.html" class="topbar-back">← กลับระบบ</a>
+</div>
+
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-eyebrow">📖 คู่มือการใช้งาน</div>
+    <h1>ระบบจองห้องประชุม<br><em>ศาลแพ่งมีนบุรี</em></h1>
+    <p>คู่มือฉบับสมบูรณ์สำหรับการใช้งานระบบจองห้องประชุม ตั้งแต่การเข้าสู่ระบบ การจองห้อง ไปจนถึงการจัดการสำหรับผู้ดูแลระบบ</p>
+    <div class="hero-tags">
+      <span class="hero-tag">👤 ผู้ใช้งานทั่วไป</span>
+      <span class="hero-tag">👑 ผู้ดูแลระบบ</span>
+      <span class="hero-tag">👁 ผู้เยี่ยมชม</span>
+    </div>
+  </div>
+</div>
+
+<div class="page">
+
+  <!-- TOC -->
+  <div class="toc">
+    <div class="toc-title">สารบัญ</div>
+    <div class="toc-grid">
+      <a href="#sec1" class="toc-item"><span class="toc-num">1.</span> ประเภทผู้ใช้งาน</a>
+      <a href="#sec2" class="toc-item"><span class="toc-num">2.</span> การเข้าสู่ระบบ</a>
+      <a href="#sec3" class="toc-item"><span class="toc-num">3.</span> หน้าหลัก / ปฏิทิน</a>
+      <a href="#sec4" class="toc-item"><span class="toc-num">4.</span> การจองห้องประชุม</a>
+      <a href="#sec5" class="toc-item"><span class="toc-num">5.</span> สถานะการจอง</a>
+      <a href="#sec6" class="toc-item"><span class="toc-num">6.</span> การแก้ไข / ยกเลิก</a>
+      <a href="#sec7" class="toc-item"><span class="toc-num">7.</span> สำหรับผู้ดูแลระบบ</a>
+      <a href="#sec8" class="toc-item"><span class="toc-num">8.</span> คำถามที่พบบ่อย</a>
+    </div>
+  </div>
+
+  <!-- SECTION 1 -->
+  <div class="section" id="sec1">
+    <div class="section-header">
+      <div class="section-num">1</div>
+      <div class="section-icon">👥</div>
+      <div class="section-title">ประเภทผู้ใช้งาน</div>
+    </div>
+
+    <div class="role-cards">
+      <div class="role-card admin">
+        <div class="role-card-icon">👑</div>
+        <div class="role-card-title">ผู้ดูแลระบบ (Admin)</div>
+        <div class="role-card-desc">อนุมัติหรือปฏิเสธคำขอจอง จัดการห้องประชุม จัดการบัญชีผู้ใช้ และดูประวัติการจองทั้งหมด</div>
+      </div>
+      <div class="role-card user">
+        <div class="role-card-icon">👤</div>
+        <div class="role-card-title">ผู้ใช้งานทั่วไป (User)</div>
+        <div class="role-card-desc">ส่งคำขอจองห้องประชุม แก้ไข และยกเลิกการจองของตนเองได้ หลังเข้าสู่ระบบด้วยบัญชีองค์กรหรือ Google</div>
+      </div>
+      <div class="role-card guest">
+        <div class="role-card-icon">👁</div>
+        <div class="role-card-title">ผู้เยี่ยมชม (Guest)</div>
+        <div class="role-card-desc">ดูตารางการจองได้เท่านั้น ไม่สามารถจองหรือแก้ไขข้อมูลใดได้ ไม่ต้องล็อกอิน</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-divider"></div>
+
+  <!-- SECTION 2 -->
+  <div class="section" id="sec2">
+    <div class="section-header">
+      <div class="section-num">2</div>
+      <div class="section-icon">🔐</div>
+      <div class="section-title">การเข้าสู่ระบบ</div>
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <div class="step-title">เปิดระบบ</div>
+          <div class="step-desc">ไปที่หน้าเข้าสู่ระบบ (<code>login.html</code>) จะเห็นตัวเลือกการล็อกอิน 2 แบบ และสถานะห้องประชุมแสดงฝั่งซ้าย</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <div class="step-title">เลือกวิธีเข้าสู่ระบบ</div>
+          <div class="step-desc">
+            <strong>วิธีที่ 1:</strong> กดปุ่ม <strong>"เข้าสู่ระบบด้วย Google"</strong> — เหมาะสำหรับผู้ที่มีบัญชี Google ขององค์กร<br>
+            <strong>วิธีที่ 2:</strong> กรอก <strong>ชื่อผู้ใช้</strong> และ <strong>รหัสผ่าน</strong> ที่ได้รับจากผู้ดูแลระบบ แล้วกด <strong>"เข้าสู่ระบบ"</strong>
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <div class="step-title">ดูตารางโดยไม่ล็อกอิน (ผู้เยี่ยมชม)</div>
+          <div class="step-desc">กดปุ่ม <strong>"ดูตารางโดยไม่เข้าสู่ระบบ"</strong> เพื่อดูตารางการจองได้เลย โดยไม่มีสิทธิ์จองห้อง</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout note" style="margin-top:16px">
+      <div class="callout-icon">ℹ️</div>
+      <div><strong>หมายเหตุ:</strong> หากลืมรหัสผ่านหรือยังไม่มีบัญชี กรุณาติดต่อผู้ดูแลระบบเพื่อขอบัญชีใหม่</div>
+    </div>
+  </div>
+
+  <div class="section-divider"></div>
+
+  <!-- SECTION 3 -->
+  <div class="section" id="sec3">
+    <div class="section-header">
+      <div class="section-num">3</div>
+      <div class="section-icon">📅</div>
+      <div class="section-title">หน้าหลัก — ปฏิทินจอง</div>
+    </div>
+
+    <p style="font-size:15px;color:var(--muted);margin-bottom:20px;line-height:1.7">
+      หน้าหลักแสดงปฏิทินการจองห้องประชุม มุมมอง 3 แบบ และแถบด้านซ้ายสำหรับกรองห้องและรออนุมัติ
+    </p>
+
+    <div class="view-tabs">
+      <div class="view-tab">
+        <div class="view-tab-icon">📆</div>
+        <div class="view-tab-name">มุมมองรายวัน</div>
+        <div class="view-tab-desc">ดูตารางแต่ละห้องแบบแนวคอลัมน์ ในวันเดียว เห็นรายละเอียดชั่วโมงชัดเจน</div>
+      </div>
+      <div class="view-tab">
+        <div class="view-tab-icon">🗓️</div>
+        <div class="view-tab-name">มุมมองรายสัปดาห์</div>
+        <div class="view-tab-desc">ดูภาพรวมตลอดสัปดาห์ เหมาะสำหรับวางแผนล่วงหน้า</div>
+      </div>
+      <div class="view-tab">
+        <div class="view-tab-icon">📋</div>
+        <div class="view-tab-name">มุมมองรายเดือน</div>
+        <div class="view-tab-desc">ดูภาพรวมทั้งเดือน เห็นวันที่มีการจองและจำนวนรายการ</div>
+      </div>
+    </div>
+
+    <div class="steps" style="margin-top:8px">
+      <div class="step">
+        <div class="step-num">📍</div>
+        <div class="step-body">
+          <div class="step-title">แถบด้านซ้าย — กรองห้องประชุม</div>
+          <div class="step-desc">คลิกชื่อห้องเพื่อแสดง/ซ่อนการจองของห้องนั้นบนปฏิทิน สามารถแสดงหลายห้องพร้อมกัน (ไม่สามารถซ่อนทุกห้องพร้อมกันได้)</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">⬅️</div>
+        <div class="step-body">
+          <div class="step-title">ปุ่มนำทาง ‹ › และ "วันนี้"</div>
+          <div class="step-desc">กดลูกศรซ้าย/ขวาเพื่อเลื่อนวัน สัปดาห์ หรือเดือน กดปุ่ม <strong>"วันนี้"</strong> เพื่อกลับมาวันปัจจุบัน</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">🖱️</div>
+        <div class="step-body">
+          <div class="step-title">คลิกช่องเวลาว่างเพื่อจอง</div>
+          <div class="step-desc">ในมุมมองรายวัน/สัปดาห์ — คลิกบนช่องเวลาที่ว่างเพื่อเปิดฟอร์มจองห้อง (ต้องล็อกอินก่อน)</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">👆</div>
+        <div class="step-body">
+          <div class="step-title">คลิกบล็อกการจองเพื่อดูรายละเอียด</div>
+          <div class="step-desc">คลิกบนการจองที่แสดงในปฏิทินเพื่อดูรายละเอียดเต็ม เช่น ชื่อการประชุม เวลา ผู้จอง สถานะ</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout tip" style="margin-top:16px">
+      <div class="callout-icon">💡</div>
+      <div><strong>เคล็ดลับ:</strong> บนมือถือ ใช้ปุ่ม ☰ (hamburger) มุมซ้ายบนเพื่อเปิดแถบกรองห้อง และแถบสีห้องที่ด้านบนปฏิทินเพื่อสลับแสดง/ซ่อนห้อง</div>
+    </div>
+  </div>
+
+  <div class="section-divider"></div>
+
+  <!-- SECTION 4 -->
+  <div class="section" id="sec4">
+    <div class="section-header">
+      <div class="section-num">4</div>
+      <div class="section-icon">📝</div>
+      <div class="section-title">การจองห้องประชุม</div>
+    </div>
+
+    <div class="callout warn" style="margin-bottom:20px">
+      <div class="callout-icon">⚠️</div>
+      <div><strong>สำคัญ:</strong> ต้องเข้าสู่ระบบก่อนจึงจะสามารถจองห้องได้ ผู้เยี่ยมชมดูได้อย่างเดียว</div>
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <div class="step-title">เปิดฟอร์มจอง</div>
+          <div class="step-desc">คลิกช่องเวลาว่างบนปฏิทิน หรือคลิกวันบนมุมมองรายเดือน — ฟอร์มจองจะเปิดขึ้นมาทันที</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <div class="step-title">ตรวจสอบ ศาล/หน่วยงาน และเบอร์โทร</div>
+          <div class="step-desc">ระบบจะดึงข้อมูลจากบัญชีให้อัตโนมัติ <strong>ตรวจสอบเบอร์โทรให้ถูกต้อง</strong> เพราะผู้ดูแลจะใช้ติดต่อเมื่ออนุมัติ</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <div class="step-title">กรอกชื่อการประชุม</div>
+          <div class="step-desc">ใส่ชื่อที่สื่อความหมาย เช่น <strong>"ประชุมทีมฝ่าย IT"</strong> หรือ <strong>"สัมมนาผู้พิพากษา"</strong> และรายละเอียดเพิ่มเติม (ถ้ามี)</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <div class="step-title">เลือกห้องที่ต้องการ</div>
+          <div class="step-desc">เลือกห้องจาก dropdown ระบบจะแสดงชั้นและความจุให้ทราบ</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">5</div>
+        <div class="step-body">
+          <div class="step-title">เลือกวันที่ (รองรับหลายวัน)</div>
+          <div class="step-desc">
+            <strong>คลิกวันบน mini-calendar</strong> เพื่อเลือก สามารถเลือก<strong>หลายวันพร้อมกัน</strong>ได้
+            เช่น จองติดกัน 3 วัน<br>
+            — วันสีน้ำเงิน = เลือกแล้ว<br>
+            — วันสีส้ม = มีการจองอยู่แล้วในช่วงเวลานั้น<br>
+            — คลิก ✕ บน chip เพื่อเอาวันออก
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">6</div>
+        <div class="step-body">
+          <div class="step-title">เลือกช่วงเวลา</div>
+          <div class="step-desc">
+            <strong>วิธีด่วน:</strong> กดปุ่ม 🌅 เช้า (08:30–12:00), 🌤 บ่าย (13:00–16:30), ☀️ ทั้งวัน (08:30–16:30)<br>
+            <strong>กำหนดเอง:</strong> เลือก "เวลาเริ่ม" และ "เวลาสิ้นสุด" จาก dropdown ด้านล่าง
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">7</div>
+        <div class="step-body">
+          <div class="step-title">ตรวจสอบและกด "ส่งคำขอจอง"</div>
+          <div class="step-desc">
+            หากมี <strong>⚠ แจ้งเตือนการจองซ้ำ</strong> — ระบบจะถามว่าจะจองเฉพาะวันที่ว่างหรือไม่<br>
+            เมื่อส่งแล้ว คำขอจะอยู่ใน <strong>สถานะ "รออนุมัติ"</strong> รอผู้ดูแลระบบดำเนินการ
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout tip" style="margin-top:16px">
+      <div class="callout-icon">💡</div>
+      <div><strong>การจองหลายวัน:</strong> เลือกหลายวันได้ในครั้งเดียว ระบบจะรวมเป็น 1 กลุ่ม การอนุมัติ/ปฏิเสธจะทำพร้อมกันทุกวัน</div>
+    </div>
+  </div>
+
+  <div class="section-divider"></div>
+
+  <!-- SECTION 5 -->
+  <div class="section" id="sec5">
+    <div class="section-header">
+      <div class="section-num">5</div>
+      <div class="section-icon">🏷️</div>
+      <div class="section-title">สถานะการจอง</div>
+    </div>
+
+    <p style="font-size:14px;color:var(--muted);margin-bottom:16px">แต่ละการจองจะแสดงสถานะต่างๆ บนปฏิทินและหน้ารายละเอียด</p>
+
+    <div class="badge-demo">
+      <span class="badge pending">⏳ รออนุมัติ</span>
+      <span class="badge approved">🕐 กำลังจะมาถึง</span>
+      <span class="badge active">🟢 กำลังดำเนินอยู่</span>
+      <span class="badge completed">✓ เสร็จสิ้น</span>
+      <span class="badge rejected">✕ ปฏิเสธ</span>
+    </div>
+
+    <table class="admin-table" style="margin-top:16px">
+      <thead>
+        <tr>
+          <th>สถานะ</th>
+          <th>ความหมาย</th>
+          <th>ทำอะไรได้</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>⏳ รออนุมัติ</td>
+          <td>ส่งคำขอแล้ว รอผู้ดูแลระบบตรวจสอบ — แสดงบนปฏิทินเป็นกรอบเส้นประ</td>
+          <td>แก้ไขหรือยกเลิกได้</td>
+        </tr>
+        <tr>
+          <td>🕐 กำลังจะมาถึง</td>
+          <td>ได้รับการอนุมัติแล้ว ยังไม่ถึงเวลาประชุม</td>
+          <td>ลบได้ (admin เท่านั้น)</td>
+        </tr>
+        <tr>
+          <td>🟢 กำลังดำเนินอยู่</td>
+          <td>เวลาปัจจุบันอยู่ในช่วงการประชุม</td>
+          <td>ไม่สามารถลบได้</td>
+        </tr>
+        <tr>
+          <td>✓ เสร็จสิ้น</td>
+          <td>เวลาประชุมผ่านไปแล้ว ระบบเปลี่ยนอัตโนมัติ</td>
+          <td>ดูได้อย่างเดียว</td>
+        </tr>
+        <tr>
+          <td>✕ ปฏิเสธ</td>
+          <td>ผู้ดูแลระบบไม่อนุมัติคำขอ</td>
+          <td>จองใหม่ได้</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout note" style="margin-top:16px">
+      <div class="callout-icon">ℹ️</div>
+      <div>เมื่อคำขอได้รับการ <strong>อนุมัติหรือปฏิเสธ</strong> ระบบจะแจ้งเตือน toast notification ที่ด้านล่างหน้าจอโดยอัตโนมัติ</div>
+    </div>
+  </div>
+
+  <div class="section-divider"></div>
+
+  <!-- SECTION 6 -->
+  <div class="section" id="sec6">
+    <div class="section-header">
+      <div class="section-num">6</div>
+      <div class="section-icon">✏️</div>
+      <div class="section-title">การแก้ไขและยกเลิกการจอง</div>
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">✏️</div>
+        <div class="step-body">
+          <div class="step-title">การแก้ไข (เฉพาะสถานะ "รออนุมัติ")</div>
+          <div class="step-desc">
+            คลิกบล็อกการจองบนปฏิทิน → กด <strong>"✏️ แก้ไข"</strong><br>
+            แก้ไขได้ทั้งชื่อ รายละเอียด เวลา และห้อง<br>
+            เมื่อบันทึก คำขอจะถูกตั้งเป็น <strong>"รออนุมัติ"</strong> ใหม่อีกครั้ง
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">🗑️</div>
+        <div class="step-body">
+          <div class="step-title">การยกเลิก (ผู้ใช้ทั่วไป)</div>
+          <div class="step-desc">
+            คลิกบล็อกการจอง → กด <strong>"ยกเลิกการจอง"</strong><br>
+            ทำได้เฉพาะการจองของตัวเองที่ยังอยู่ใน<strong>สถานะ "รออนุมัติ"</strong> เท่านั้น
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">⛔</div>
+        <div class="step-body">
+          <div class="step-title">ไม่สามารถลบได้ในกรณีต่อไปนี้</div>
+          <div class="step-desc">
+            — การประชุม<strong>กำลังดำเนินอยู่</strong> (เวลาปัจจุบันอยู่ในช่วงประชุม)<br>
+            — การจองที่<strong>ไม่ใช่ของตัวเอง</strong> (ต้องเป็น admin เท่านั้น)
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-divider"></div>
+
+  <!-- SECTION 7 -->
+  <div class="section" id="sec7">
+    <div class="section-header">
+      <div class="section-num">7</div>
+      <div class="section-icon">👑</div>
+      <div class="section-title">สำหรับผู้ดูแลระบบ (Admin)</div>
+    </div>
+
+    <div class="callout warn" style="margin-bottom:20px">
+      <div class="callout-icon">🔑</div>
+      <div>หน้านี้เข้าได้เฉพาะบัญชีที่มีสิทธิ์ <strong>Admin</strong> เท่านั้น</div>
+    </div>
+
+    <div class="steps">
+
+      <div class="step">
+        <div class="step-num">✅</div>
+        <div class="step-body">
+          <div class="step-title">อนุมัติ / ปฏิเสธ คำขอจอง</div>
+          <div class="step-desc">
+            <strong>จากแถบซ้าย "รออนุมัติ":</strong> กด <strong>"✓ อนุมัติ"</strong> หรือ <strong>"✕ ปฏิเสธ"</strong> ได้เลย<br>
+            <strong>จากปฏิทิน:</strong> คลิกบล็อกการจอง → เลือก "อนุมัติ" ในหน้ารายละเอียด<br><br>
+            <strong>⚠ หากมีการจองซ้ำวันเวลา:</strong> ระบบจะแจ้งให้ทราบและแสดงจำนวนรายการที่ซ้ำ การอนุมัติรายการหนึ่งจะ<strong>ปฏิเสธรายการซ้ำอัตโนมัติ</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">🏢</div>
+        <div class="step-body">
+          <div class="step-title">จัดการห้องประชุม (เมนู → จัดการห้องประชุม)</div>
+          <div class="step-desc">
+            — <strong>เพิ่มห้องใหม่:</strong> กด "+ เพิ่มห้องประชุม" กรอกชื่อ ชั้น ความจุ สีห้อง<br>
+            — <strong>แก้ไขห้อง:</strong> กด "✏️ แก้ไข" บนการ์ดห้อง<br>
+            — <strong>ระงับห้อง:</strong> กด "🔒 ระงับ" เพื่อซ่อนห้องจากระบบจอง (ยังมีข้อมูลอยู่)
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">👥</div>
+        <div class="step-body">
+          <div class="step-title">จัดการผู้ใช้งาน (เมนู → จัดการผู้ใช้งาน)</div>
+          <div class="step-desc">
+            — <strong>เพิ่มผู้ใช้ใหม่:</strong> กด "+ เพิ่มผู้ใช้งาน" กรอก username, ชื่อแสดงผล, รหัสผ่าน, ศาล, สิทธิ์<br>
+            — <strong>แก้ไขข้อมูล:</strong> กด "✏️ แก้ไข" (ไม่สามารถเปลี่ยน username ได้หลังสร้างแล้ว)<br>
+            — <strong>Reset รหัสผ่าน:</strong> กด "✏️ แก้ไข" แล้วกรอกรหัสผ่านใหม่ในช่องรหัสผ่าน<br>
+            — <strong>ระงับบัญชี:</strong> กด "ระงับ" เพื่อปิดการเข้าถึงชั่วคราว
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">📋</div>
+        <div class="step-body">
+          <div class="step-title">ดูประวัติการจอง (เมนู → ประวัติการจอง)</div>
+          <div class="step-desc">
+            ดูคำขอจองทั้งหมดพร้อม filter ตามสถานะ ห้อง วันที่ และค้นหาชื่อ<br>
+            แสดงข้อมูลครบถ้วน: ผู้จอง ศาล เบอร์โทร เหตุผลปฏิเสธ เวลาบันทึก
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="quick-grid" style="margin-top:20px">
+      <div class="quick-item">
+        <div class="quick-item-icon">🖱️</div>
+        <div class="quick-item-label">คลิกอนุมัติ</div>
+        <div class="quick-item-detail">จากแถบซ้ายหรือหน้ารายละเอียด</div>
+      </div>
+      <div class="quick-item">
+        <div class="quick-item-icon">🔄</div>
+        <div class="quick-item-label">Real-time</div>
+        <div class="quick-item-detail">ข้อมูลอัปเดตอัตโนมัติ ไม่ต้อง refresh</div>
+      </div>
+      <div class="quick-item">
+        <div class="quick-item-icon">🗑️</div>
+        <div class="quick-item-label">ลบได้ทุกรายการ</div>
+        <div class="quick-item-detail">ยกเว้นที่กำลังดำเนินอยู่</div>
+      </div>
+      <div class="quick-item">
+        <div class="quick-item-icon">📊</div>
+        <div class="quick-item-label">ดูประวัติ</div>
+        <div class="quick-item-detail">ประวัติทุกสถานะ ทุกห้อง ทุกคน</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-divider"></div>
+
+  <!-- SECTION 8 -->
+  <div class="section" id="sec8">
+    <div class="section-header">
+      <div class="section-num">8</div>
+      <div class="section-icon">❓</div>
+      <div class="section-title">คำถามที่พบบ่อย (FAQ)</div>
+    </div>
+
+    <div class="faq">
+      <div class="faq-item">
+        <div class="faq-q">
+          ทำไมกดจองแล้วไม่เห็นการจองในปฏิทินทันที?
+          <span class="faq-arrow">▼</span>
+        </div>
+        <div class="faq-a">
+          <div class="faq-a-inner">
+            เมื่อส่งคำขอ สถานะจะเป็น <strong>"รออนุมัติ"</strong> แสดงเป็นกรอบเส้นประบนปฏิทิน — ยังไม่ได้รับอนุมัติจากผู้ดูแลระบบ กรุณารอหรือติดต่อผู้ดูแลเพื่ออนุมัติ
+          </div>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q">
+          จองห้องเดิมซ้อนเวลากันได้ไหม?
+          <span class="faq-arrow">▼</span>
+        </div>
+        <div class="faq-a">
+          <div class="faq-a-inner">
+            ไม่ได้ ระบบตรวจสอบ conflict อัตโนมัติ หากมีการจองซ้ำจะแจ้งเตือน ⚠ และแสดงวันที่มีปัญหา คุณสามารถเลือกจองเฉพาะวันที่ว่างได้
+          </div>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q">
+          ต้องการจองต่อเนื่องหลายวัน ทำอย่างไร?
+          <span class="faq-arrow">▼</span>
+        </div>
+        <div class="faq-a">
+          <div class="faq-a-inner">
+            ในฟอร์มจอง ให้<strong>คลิกเลือกหลายวันพร้อมกัน</strong>บน mini-calendar ด้านซ้ายของวันที่ต้องการ สามารถเลือกได้ไม่จำกัดจำนวนวัน ระบบจะรวมทุกวันเป็น 1 กลุ่ม
+          </div>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q">
+          ลืมรหัสผ่านต้องทำอย่างไร?
+          <span class="faq-arrow">▼</span>
+        </div>
+        <div class="faq-a">
+          <div class="faq-a-inner">
+            ติดต่อผู้ดูแลระบบเพื่อ reset รหัสผ่าน ผู้ดูแลสามารถเข้าหน้า "จัดการผู้ใช้งาน" และตั้งรหัสผ่านใหม่ให้ได้ทันที
+          </div>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q">
+          ทำไมลบการจองไม่ได้?
+          <span class="faq-arrow">▼</span>
+        </div>
+        <div class="faq-a">
+          <div class="faq-a-inner">
+            มีสองกรณี: (1) การประชุม<strong>กำลังดำเนินอยู่</strong> — ไม่อนุญาตให้ลบระหว่างประชุม (2) การจองได้รับ<strong>อนุมัติแล้ว</strong> — ผู้ใช้ทั่วไปลบไม่ได้ ต้องให้ Admin ดำเนินการ
+          </div>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q">
+          ข้อมูลอัปเดตทันทีหรือต้องรีเฟรช?
+          <span class="faq-arrow">▼</span>
+        </div>
+        <div class="faq-a">
+          <div class="faq-a-inner">
+            ระบบใช้ <strong>Firestore Real-time</strong> ข้อมูลอัปเดตทันทีโดยอัตโนมัติ ไม่ต้อง refresh หน้า เมื่อ Admin อนุมัติหรือปฏิเสธคำขอ ผู้จองจะเห็นการแจ้งเตือนทันที
+          </div>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <div class="faq-q">
+          สามารถดูตารางห้องอื่นพร้อมกันได้ไหม?
+          <span class="faq-arrow">▼</span>
+        </div>
+        <div class="faq-a">
+          <div class="faq-a-inner">
+            ได้ ในมุมมองรายวันและสัปดาห์ จะแสดงทุกห้องเป็นคอลัมน์ขนานกัน สามารถ<strong>คลิกชื่อห้องในแถบซ้าย</strong>เพื่อแสดง/ซ่อนได้ตามต้องการ
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">
+  <div style="font-size:18px;margin-bottom:8px">📖</div>
+  <strong>คู่มือการใช้งานระบบจองห้องประชุม</strong><br>
+  ศาลแพ่งมีนบุรี — ระบบบริหารจัดการห้องประชุมภายในองค์กร
+</div>
+
+<script>
+  // FAQ toggle
+  document.querySelectorAll('.faq-q').forEach(q => {
+    q.addEventListener('click', () => {
+      const item = q.parentElement;
+      const isOpen = item.classList.contains('open');
+      document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+      if (!isOpen) item.classList.add('open');
+    });
+  });
+
+  // Smooth scroll for TOC links
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+      e.preventDefault();
+      const target = document.querySelector(a.getAttribute('href'));
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  });
+</script>
+</body>
+</html>
